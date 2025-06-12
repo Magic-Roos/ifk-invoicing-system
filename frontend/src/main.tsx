@@ -11,6 +11,7 @@ import { processFile } from './processing/fileProcessor';
 import { processInvoices } from './processing/invoiceProcessor';
 import { BillingResult } from './types';
 import { UploadFile as UploadFileIcon } from '@mui/icons-material';
+import ifkLogo from './assets/ifk_logo.png';
 import DescriptionIcon from '@mui/icons-material/Description';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -244,7 +245,7 @@ const App = () => {
               mr: 2,      // Margin to the right
             }}
             alt="IFK Göteborg Orientering Logotyp"
-            src="/ifk_logo.png" // Path from public folder
+            src={ifkLogo}
           />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             IFK Göteborg Orientering - Faktureringssystem
