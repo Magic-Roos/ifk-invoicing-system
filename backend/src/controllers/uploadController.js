@@ -56,11 +56,14 @@ const parseCsvBuffer = (buffer) => {
 
 // Internal helper function to process file data (buffer, name, type)
 const _processFileData = async (fileBuffer, originalFilename, mimeType) => {
+  console.log('[BE] _processFileData called with originalFilename:', originalFilename, 'mimeType:', mimeType);
   let parsedData = [];
 
   if (mimeType === 'text/csv' || originalFilename.toLowerCase().endsWith('.csv')) {
     
+    console.log('[BE] Attempting to parse CSV');
     parsedData = await parseCsvBuffer(fileBuffer);
+    console.log('[BE] CSV parsed, records:', parsedData.length);
   } else if (
     mimeType === 'application/vnd.ms-excel' || // .xls
     mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
@@ -71,7 +74,9 @@ const _processFileData = async (fileBuffer, originalFilename, mimeType) => {
     const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
+    console.log('[BE] Attempting to parse Excel sheet:', firstSheetName);
     parsedData = xlsx.utils.sheet_to_json(worksheet);
+    console.log('[BE] Excel parsed, records:', parsedData.length);
   } else {
     throw new Error('Unsupported file type. Please upload CSV or Excel.');
   }
@@ -189,7 +194,10 @@ const _processFileData = async (fileBuffer, originalFilename, mimeType) => {
   
   
   
+  console.log('[BE] Data standardized, count:', standardizedData.length, 'First item (if any):', standardizedData[0]);
+  console.log('[BE] Applying invoicing rules...');
   const billingResults = ruleEngineService.applyInvoicingRules(standardizedData);
+  console.log('[BE] Invoicing rules applied, results count:', billingResults.length, 'First result (if any):', billingResults[0]);
 
   
 
@@ -209,6 +217,12 @@ const _processFileData = async (fileBuffer, originalFilename, mimeType) => {
 };
 
 const handleParticipationUpload = async (req, res) => {
+  console.log('[BE] handleParticipationUpload called.');
+  if (!req.file) {
+    console.error('[BE] No file uploaded.');
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
+  console.log('[BE] File received:', req.file.originalname, 'size:', req.file.size, 'mimetype:', req.file.mimetype);
   if (!req.file || !req.file.buffer) {
     // This check might be redundant if multer is configured correctly in index.js and handles no file error
     return res.status(400).json({ message: 'No participation file was uploaded or file buffer is missing.' });
@@ -271,9 +285,14 @@ const handleReprocessParticipation = async (req, res) => {
     // will use the latest/current rules.
     const results = await _processFileData(file.buffer, file.originalname, file.mimetype);
 
+    console.log('[BE] Reprocessed participation file results:', results);
+    if (!results || results.length === 0) {
+      console.log('[BE] Warning: Empty response from reprocessing participation file.');
+    }
+
     res.status(200).json(results);
   } catch (error) {
-    console.error('Error reprocessing participation file:', error);
+    console.error('[BE] Error in handleParticipationUpload:', error.message, error.stack);
     res.status(500).json({ message: 'Error reprocessing participation file', error: error.message });
   }
 };
