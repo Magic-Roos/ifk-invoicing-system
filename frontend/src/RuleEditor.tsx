@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DEFAULT_RULES, LOCAL_STORAGE_RULES_KEY } from './rulesConfig';
 import { Box, Typography, TextField, Button, Paper, List, ListItem, ListItemText, Divider, CircularProgress, Alert } from '@mui/material';
 
 interface OtherMembersFeeShareParameters {
@@ -24,10 +25,14 @@ interface RuleEditorProps {
   onRuleChangeAndRecalculate?: () => void; 
 }
 
+// DEFAULT_RULES and LOCAL_STORAGE_RULES_KEY are now imported from rulesConfig.ts
+
 const RuleEditor: React.FC<RuleEditorProps> = ({ onClose, onRuleChangeAndRecalculate }) => {
   const [rules, setRules] = useState<Rule[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  // setLoading and setError are no longer needed for API calls, but can be kept if desired for other async ops or future use.
+  // For now, we'll simplify and remove them as primary load state is synchronous from localStorage.
+  // const [loading, setLoading] = useState<boolean>(false); // Default to false
+  // const [error, setError] = useState<string | null>(null);
   
   // States for the editable rule (Other Members Fee Share)
   const [editableRuleId] = useState<string>('other_members_fee_share');
@@ -41,44 +46,62 @@ const RuleEditor: React.FC<RuleEditorProps> = ({ onClose, onRuleChangeAndRecalcu
   const [summerEndDate, setSummerEndDate] = useState<string>('');
   const [summerSaveStatus, setSummerSaveStatus] = useState<{ message: string, severity: 'success' | 'error' } | null>(null);
 
-  const fetchRules = React.useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const loadAndSetRules = React.useCallback(() => {
+    let loadedRules: Rule[] = DEFAULT_RULES;
     try {
-      const response = await fetch('http://localhost:3001/api/rules');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch rules: ${response.statusText}`);
+      const storedRules = localStorage.getItem(LOCAL_STORAGE_RULES_KEY);
+      if (storedRules) {
+        const parsedRules: Rule[] = JSON.parse(storedRules);
+        // Basic validation: check if it's an array and has expected structure for key rules
+        if (Array.isArray(parsedRules) && parsedRules.every(r => r.id && r.name)) {
+          // Further ensure essential editable rules exist, or merge defaults
+          // This merge logic can be sophisticated, for now, we'll assume stored is mostly good or use defaults if not.
+          // A simple strategy: if essential editable rules are missing from storage, revert to full defaults.
+          const hasOtherMembersRule = parsedRules.find(r => r.id === editableRuleId);
+          const hasSummerRule = parsedRules.find(r => r.id === editableSummerRuleId);
+          if (hasOtherMembersRule && hasSummerRule) {
+            loadedRules = parsedRules;
+          } else {
+            // Stored data is incomplete for editable rules, use defaults and save them
+            console.warn('Stored rules incomplete, reverting to defaults.');
+            localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(DEFAULT_RULES));
+            loadedRules = DEFAULT_RULES; 
+          }
+        } else {
+          console.warn('Invalid rules structure in localStorage, using defaults.');
+          localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(DEFAULT_RULES));
+        }
+      } else {
+        // No rules in localStorage, use defaults and save them
+        localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(DEFAULT_RULES));
       }
-      const data: Rule[] = await response.json();
-      setRules(data);
+    } catch (error) {
+      console.error('Error loading rules from localStorage, using defaults:', error);
+      localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(DEFAULT_RULES)); // Save defaults if error
+      loadedRules = DEFAULT_RULES; // Ensure loadedRules is set
+    }
+    setRules(loadedRules);
 
-      // Populate form fields for Other Members Fee Share rule
-      const otherMembersRule = data.find(r => r.id === editableRuleId);
-      if (otherMembersRule && otherMembersRule.parameters && 'runnerPaysPercentage' in otherMembersRule.parameters) {
-        setCurrentPercentage(((otherMembersRule.parameters as OtherMembersFeeShareParameters).runnerPaysPercentage * 100).toString());
-        setCurrentMaxAmount((otherMembersRule.parameters as OtherMembersFeeShareParameters).maxRunnerPays.toString());
-      }
+    // Populate form fields from loaded rules
+    const otherMembersRule = loadedRules.find(r => r.id === editableRuleId);
+    if (otherMembersRule && otherMembersRule.parameters && 'runnerPaysPercentage' in otherMembersRule.parameters) {
+      setCurrentPercentage(((otherMembersRule.parameters as OtherMembersFeeShareParameters).runnerPaysPercentage * 100).toString());
+      setCurrentMaxAmount((otherMembersRule.parameters as OtherMembersFeeShareParameters).maxRunnerPays.toString());
+    }
 
-      // Populate form fields for Summer Event Fee rule
-      const summerRule = data.find(r => r.id === editableSummerRuleId);
-      if (summerRule && summerRule.parameters && 'startDate' in summerRule.parameters) {
-        setSummerStartDate((summerRule.parameters as SummerEventFeeParameters).startDate);
-        setSummerEndDate((summerRule.parameters as SummerEventFeeParameters).endDate);
-      }
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-    } finally {
-      setLoading(false);
+    const summerRule = loadedRules.find(r => r.id === editableSummerRuleId);
+    if (summerRule && summerRule.parameters && 'startDate' in summerRule.parameters) {
+      setSummerStartDate((summerRule.parameters as SummerEventFeeParameters).startDate);
+      setSummerEndDate((summerRule.parameters as SummerEventFeeParameters).endDate);
     }
   }, [editableRuleId, editableSummerRuleId]);
 
   useEffect(() => {
-    fetchRules();
-  }, [fetchRules]);
+    loadAndSetRules();
+  }, [loadAndSetRules]);
 
 
-  const handleSave = async () => {
+  const handleSave = () => { // No longer async
     setSaveStatus(null);
     const percentage = parseFloat(currentPercentage) / 100;
     const maxAmount = parseFloat(currentMaxAmount);
@@ -92,40 +115,34 @@ const RuleEditor: React.FC<RuleEditorProps> = ({ onClose, onRuleChangeAndRecalcu
       return;
     }
 
-    try {
-      const response = await fetch(`http://localhost:3001/api/rules/${editableRuleId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          runnerPaysPercentage: percentage,
-          maxRunnerPays: maxAmount,
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message || 'Failed to save rule');
+    const updatedRules = rules.map(rule => {
+      if (rule.id === editableRuleId) {
+        const newName = `Other Members Fee Share (${(percentage * 100).toFixed(0)}%, max ${maxAmount} SEK)`;
+        const newDescription = `For standard start fees, other members pay ${(percentage * 100).toFixed(0)}% of the fee, up to a maximum of ${maxAmount} SEK. The club pays the rest.`;
+        return {
+          ...rule,
+          name: newName,
+          description: newDescription,
+          parameters: { runnerPaysPercentage: percentage, maxRunnerPays: maxAmount },
+        };
       }
-      setSaveStatus({ message: 'Regeln har sparats!', severity: 'success' });
-      fetchRules(); 
-      if (onRuleChangeAndRecalculate) {
-        onRuleChangeAndRecalculate(); // Call the callback
-      } 
-    } catch (err) {
-      setSaveStatus({ message: err instanceof Error ? err.message : 'Ett okänt fel inträffade vid sparning.', severity: 'error' });
+      return rule;
+    });
+    setRules(updatedRules);
+    localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(updatedRules));
+    setSaveStatus({ message: 'Regeln har sparats lokalt!', severity: 'success' });
+    if (onRuleChangeAndRecalculate) {
+      onRuleChangeAndRecalculate();
     }
+    // No catch block needed for direct state/localStorage update unless JSON.stringify fails (highly unlikely for this data)
   };
 
-  if (loading) {
-    return <CircularProgress />;
-  }
+  // Loading and error states for API calls are removed.
+  // The component now loads synchronously from localStorage or defaults.
+  // If an error occurs during localStorage parsing, a console warning is shown, and defaults are used.
+  // A more sophisticated UI for localStorage errors could be added if necessary.
 
-  if (error) {
-    return <Alert severity="error">Kunde inte ladda regler: {error}</Alert>;
-  }
-
-  const handleSaveSummerRule = async () => {
+  const handleSaveSummerRule = () => { // No longer async
     setSummerSaveStatus(null);
 
     if (!summerStartDate || !summerEndDate) {
@@ -137,29 +154,26 @@ const RuleEditor: React.FC<RuleEditorProps> = ({ onClose, onRuleChangeAndRecalcu
       return;
     }
 
-    try {
-      const response = await fetch(`http://localhost:3001/api/rules/${editableSummerRuleId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          startDate: summerStartDate,
-          endDate: summerEndDate,
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message || 'Failed to save summer event fee rule');
+    const updatedRules = rules.map(rule => {
+      if (rule.id === editableSummerRuleId) {
+        const newName = `Runner Pays Full for Summer Period Events (${summerStartDate} - ${summerEndDate})`;
+        const newDescription = `Runner pays the full start fee for events during the summer period (${summerStartDate} - ${summerEndDate}).`;
+        return {
+          ...rule,
+          name: newName,
+          description: newDescription,
+          parameters: { startDate: summerStartDate, endDate: summerEndDate },
+        };
       }
-      setSummerSaveStatus({ message: 'Sommarperiodens datum har sparats!', severity: 'success' });
-      fetchRules(); // Re-fetch rules to show updated name/description
-      if (onRuleChangeAndRecalculate) {
-        onRuleChangeAndRecalculate(); // Call the callback
-      }
-    } catch (err) {
-      setSummerSaveStatus({ message: err instanceof Error ? err.message : 'Ett okänt fel inträffade vid sparning.', severity: 'error' });
+      return rule;
+    });
+    setRules(updatedRules);
+    localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(updatedRules));
+    setSummerSaveStatus({ message: 'Sommarperiodens datum har sparats lokalt!', severity: 'success' });
+    if (onRuleChangeAndRecalculate) {
+      onRuleChangeAndRecalculate();
     }
+    // No catch block needed for direct state/localStorage update
   };
 
   const otherMembersRuleDetails = rules.find(r => r.id === editableRuleId);

@@ -2,12 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, IconButton, Collapse, TableSortLabel } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import { ParticipationData } from './ResultsTable'; // Assuming ParticipationData is exported from ResultsTable or a shared types file
+import { BillingResult } from './types';
 
 interface CompetitionSummary {
   competitionName: string;
   competitionDate: string;
-  participants: ParticipationData[];
+  participants: BillingResult[];
   participantCount: number;
   totalOriginalFee: number;
   totalToInvoiceRunner: number;
@@ -96,7 +96,7 @@ const CompetitionRow: React.FC<CompetitionRowProps> = ({ competition }) => {
 };
 
 interface CompetitionResultsTableProps {
-  results: ParticipationData[];
+  results: BillingResult[];
 }
 
 const CompetitionResultsTable: React.FC<CompetitionResultsTableProps> = ({ results }) => {

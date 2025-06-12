@@ -17,24 +17,11 @@ import {
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import DownloadIcon from '@mui/icons-material/Download';
-import { exportToExcel, SheetConfig } from './exportToExcel';
+import { exportToExcel, SheetConfig, ExportRow } from './exportToExcel';
+import { BillingResult } from './types';
 
 // Type definitions
 type Order = 'asc' | 'desc';
-
-export interface ParticipationData {
-  PersonId?: string | number;
-  MemberName: string;
-  CompetitionName: string;
-  CompetitionDate: string;
-  ClassName?: string;
-  feeType: string;
-  feeAmount: number;
-  runnerInvoiceAmount: number;
-  clubPaysAmount?: number;
-  appliedRule?: string;
-  description?: string;
-}
 
 interface ConsolidatedParticipation {
   competitionName: string;
@@ -51,16 +38,16 @@ interface ConsolidatedParticipation {
 }
 
 interface MemberSummary {
-  personId?: string | number;
+  personId?: string | number | null;
   memberName: string;
   competitionCount: number;
   totalOriginalFee: number;
   totalToInvoiceMember: number;
-  participations: ParticipationData[];
+  participations: BillingResult[];
 }
 
 interface ResultsTableProps {
-  results: ParticipationData[];
+  results: BillingResult[];
 }
 
 type OrderableMemberSummaryKeys = keyof Pick<MemberSummary, 'memberName' | 'competitionCount' | 'totalOriginalFee' | 'totalToInvoiceMember'>;
@@ -263,7 +250,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ results }) => {
   }, [memberSummaries, order, orderBy]);
 
   // Helper function to consolidate participations for export
-  const consolidateParticipationsForExport = (participations: ParticipationData[]) => {
+  const consolidateParticipationsForExport = (participations: BillingResult[]) => {
     if (!participations || participations.length === 0) {
       return [];
     }
@@ -385,13 +372,25 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ results }) => {
       });
     });
 
-    const sheetConfig: SheetConfig = {
+    const sheetConfig: SheetConfig<ExportRow> = {
       sheetName: 'Grupperade Resultat',
       data: exportRows,
-      // columnOrder and columnHeaders can be omitted if default behavior is fine
-      // or defined here if specific formatting/ordering is needed for this export.
+      columns: [
+        { header: 'Medlem', key: 'Medlem' },
+        { header: 'Antal Tävlingar', key: 'Antal Tävlingar' },
+        { header: 'Total Urspr. Avgift', key: 'Total Urspr. Avgift', isCurrency: true },
+        { header: 'Total Att Fakturera', key: 'Total Att Fakturera', isCurrency: true },
+        { header: 'Tävling', key: 'Tävling' },
+        { header: 'Datum', key: 'Datum' },
+        { header: 'Startavgift', key: 'Startavgift', isCurrency: true },
+        { header: 'Efteranm.avgift', key: 'Efteranm.avgift', isCurrency: true },
+        { header: 'Tjänsteavgift', key: 'Tjänsteavgift', isCurrency: true },
+        { header: 'Att Fakturera (Tävling)', key: 'Att Fakturera (Tävling)', isCurrency: true },
+        { header: 'Tillämpad Regel', key: 'Tillämpad Regel' },
+        { header: 'Beskrivning', key: 'Beskrivning' },
+      ],
     };
-    exportToExcel([sheetConfig], 'ResultatPerMedlem_Grupperad');
+    exportToExcel([sheetConfig], 'ResultatPerMedlem_Grupperad.xlsx');
   };
 
   if (!results || results.length === 0) { // Check original results for initial render

@@ -3,9 +3,13 @@ import ReactDOM from 'react-dom/client';
 import { CssBaseline, AppBar, Toolbar, Typography, Container, Button, Box, Input, Tabs, Tab, Paper, List, ListItem, ListItemIcon, ListItemText, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ResultsTable from './ResultsTable';
 import CompetitionResultsTable from './CompetitionResultsTable';
-import InvoiceReconciliationTable, { UploadedInvoiceData, OrderableCombinedDataKeys } from './InvoiceReconciliationTable';
+import InvoiceReconciliationTable from './InvoiceReconciliationTable';
+import { UploadedInvoiceData, OrderableCombinedDataKeys } from './types';
 import RuleEditor from './RuleEditor';
 import InfoPage from './InfoPage'; // Import InfoPage // Import RuleEditor
+import { processFile } from './processing/fileProcessor';
+import { processInvoices } from './processing/invoiceProcessor';
+import { BillingResult } from './types';
 import { UploadFile as UploadFileIcon } from '@mui/icons-material';
 import DescriptionIcon from '@mui/icons-material/Description';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -47,7 +51,7 @@ function a11yProps(index: number) {
 
 const App = () => {
   const [allSelectedFiles, setAllSelectedFiles] = useState<File[]>([]);
-  const [uploadResponse, setUploadResponse] = useState<any | null>(null);
+  const [uploadResponse, setUploadResponse] = useState<{ billingResults: BillingResult[] } | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showRuleEditor, setShowRuleEditor] = useState(false);
@@ -132,27 +136,21 @@ const App = () => {
         return;
       }
 
-      const formData = new FormData();
-      formData.append('participationFile', participationFile);
       setLastParticipationFile(participationFile); // Store the file for reprocessing
 
       try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiUrl}/api/upload/participation`, {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || `Fel vid bearbetning av deltagarfil: ${response.status}`);
-        }
-        console.log('Participation backend response:', data);
-        setUploadResponse(data);
+        console.log('[FE] Starting client-side file processing...');
+        const results = await processFile(participationFile);
+        console.log('[FE] Client-side processing complete:', results);
+
+        // The component expects the response in a specific shape
+        setUploadResponse({ billingResults: results });
         setCurrentParticipationFileName(participationFile.name);
-        alert(`Deltagarfilen ${participationFile.name} har bearbetats! Du kan nu ladda upp fakturor.`);
+        alert(`Deltagarfilen ${participationFile.name} har bearbetats lokalt! Du kan nu ladda upp fakturor för avstämning.`);
       } catch (err: any) {
-        console.error('Error uploading participation file:', err);
-        setError(err.message || 'Ett fel uppstod vid bearbetning av deltagarfil.');
+        console.error('Error processing participation file locally:', err);
+        setError(err.message || 'Ett fel uppstod vid lokal bearbetning av deltagarfil.');
+        alert(`Fel: ${err.message || 'Okänt fel vid bearbetning.'}`);
       } finally {
         setAllSelectedFiles([]);
         const fileInput = document.getElementById('file-upload-input-main') as HTMLInputElement;
@@ -172,28 +170,18 @@ const App = () => {
         return;
       }
       
-      const invoiceFormData = new FormData();
-      invoiceFiles.forEach(file => invoiceFormData.append('invoiceFiles', file));
+      setReconciliationSelectedFiles(invoiceFiles);
 
       try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiUrl}/api/upload/reconciliation/upload-invoices`, {
-          method: 'POST',
-          body: invoiceFormData,
-        });
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.message || `Fel vid bearbetning av fakturafiler: ${response.status}`);
-        }
-        console.log('Invoice backend response:', result);
-        if (result.parsedData && result.parsedData.processedFiles) {
-          setReconciliationParsedInvoiceDataList(prevData => [...prevData, ...result.parsedData.processedFiles]);
-          alert(`${invoiceFiles.length} fakturafil(er) har bearbetats och lagts till för avstämning.`);
-        } else {
-          alert('Fakturafilerna bearbetades, men ingen data returnerades för avstämning.');
-        }
+        console.log('[FE] Processing invoice files locally...');
+        const parsedData = await processInvoices(invoiceFiles);
+        console.log('[FE] Local invoice processing complete:', parsedData);
+        setReconciliationParsedInvoiceDataList(parsedData);
+        alert(`${invoiceFiles.length} fakturafil(er) har bearbetats och lagts till för avstämning.`);
       } catch (err: any) {
-        console.error('Error uploading invoice files:', err);
+        console.error('Error processing invoice files locally:', err);
+        setError(err.message || 'Ett fel uppstod vid lokal bearbetning av fakturafiler.');
+        alert(`Fel: ${err.message || 'Okänt fel vid bearbetning.'}`);
         setError(err.message || 'Ett fel uppstod vid bearbetning av fakturafiler.');
       } finally {
         setAllSelectedFiles([]);
@@ -210,32 +198,22 @@ const App = () => {
       return;
     }
 
-    console.log(`Reprocessing participation file: ${lastParticipationFile.name} due to settings change.`);
+    console.log(`[FE] Reprocessing participation file locally: ${lastParticipationFile.name} due to settings change.`);
     setIsProcessing(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('participationFile', lastParticipationFile);
-
     try {
-      // OBS: Backend-endpointen '/api/reprocess-participation' behöver skapas.
-      const response = await fetch('http://localhost:3001/api/upload/reprocess-participation', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || `Fel vid ombearbetning av deltagarfil: ${response.status}`);
-      }
-      console.log('Reprocessing backend response:', data);
-      setUploadResponse(data); // Uppdatera med nya resultat
-      // Eventuellt rensa eller omvärdera avstämningsdata om det behövs
-      // setReconciliationParsedInvoiceDataList([]); 
-      alert(`Reglerna har uppdaterats och deltagardatan för ${lastParticipationFile.name} har omberäknats.`);
+      const results = await processFile(lastParticipationFile);
+      console.log('[FE] Client-side reprocessing complete:', results);
+
+      setUploadResponse({ billingResults: results });
+      // Note: We might want to re-evaluate invoice reconciliations here if they depend on the results.
+      // For now, we just recalculate the billing results.
+      alert(`Reglerna har uppdaterats och deltagardatan för ${lastParticipationFile.name} har omberäknats lokalt.`);
     } catch (err: any) {
-      console.error('Error reprocessing participation file:', err);
-      setError(err.message || 'Ett fel uppstod vid ombearbetning av deltagarfil efter regeländring.');
-      // Valfritt, återgå till föregående uploadResponse eller hantera UI-tillstånd för att indikera misslyckande
+      console.error('Error reprocessing participation file locally:', err);
+      setError(err.message || 'Ett fel uppstod vid lokal ombearbetning av deltagarfil.');
+      alert(`Fel: ${err.message || 'Okänt fel vid ombearbetning.'}`);
     } finally {
       setIsProcessing(false);
     }
