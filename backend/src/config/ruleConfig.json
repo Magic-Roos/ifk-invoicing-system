@@ -1,0 +1,10 @@
+{
+  "otherMembersFeeShare": {
+    "runnerPaysPercentage": 0.6,
+    "maxRunnerPays": 300
+  },
+  "summerEventFee": {
+    "startDate": "2025-06-20",
+    "endDate": "2025-08-12"
+  }
+}
