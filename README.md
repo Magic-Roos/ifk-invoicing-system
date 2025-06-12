@@ -1,71 +1,66 @@
-# IFK Göteborg Orientering - Member Invoicing System
+# IFK Göteborg Orientering - Medlemsfakturering Underlagssystem
 
-This project is a full-stack web application designed to help the IFK Göteborg Orientering cashier manage invoicing of members based on their competition participation.
+Detta projekt är en webbapplikation (frontend-only) designad för att hjälpa IFK Göteborg Orienterings kassör att hantera underlag för fakturering av medlemmar baserat på deras tävlingsdeltagande. Applikationen hanterar parsning av deltagarfiler, tillämpning av avgiftsregler och generering av sammanställningar för fakturering och avstämning mot fakturor. All databehandling och regelhantering sker direkt i användarens webbläsare.
 
-## Project Structure
+## Projektstruktur
 
-- `/frontend`: Contains the React + TypeScript frontend application (Vite).
-- `/backend`: Contains the Node.js backend API.
+- `/frontend`: Innehåller React + TypeScript frontend-applikationen, byggd med Vite.
+- `/Sample data`: Innehåller exempeldatafiler för testning.
 
-## Prerequisites
+## Förutsättningar
 
-- Node.js and npm (or Yarn)
+- Node.js och npm (eller Yarn)
 
-## Setup
+## Komma igång (Utveckling)
 
-### Backend
+1.  **Klona projektet (om du inte redan gjort det):**
+    ```bash
+    git clone [URL till ditt GitHub repo]
+    cd ifk-invoicing-system
+    ```
 
-1. Navigate to the `backend` directory:
-   ```bash
-   cd backend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file by copying `.env.example` and add your `OPENAI_API_KEY`:
-   ```bash
-   cp .env.example .env
-   ```
-4. Start the development server (details to be added).
+2.  **Navigera till frontend-katalogen:**
+    ```bash
+    cd frontend
+    ```
 
-### Frontend
+3.  **Installera beroenden:**
+    ```bash
+    npm install
+    ```
 
-1. Navigate to the `frontend` directory:
-   ```bash
-   cd frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+4.  **Starta utvecklingsservern:**
+    ```bash
+    npm run dev
+    ```
+    Applikationen bör nu vara tillgänglig på `http://localhost:5173` (eller en annan port som Vite anger).
 
-## Linting and Formatting
+## Linting och Formatering (i `/frontend`-katalogen)
 
-Both `frontend` and `backend` projects are equipped with ESLint and Prettier.
+Projektet använder ESLint och Prettier för kodkvalitet.
 
-To lint:
-```bash
-npm run lint
-```
+-   **Kör linting:**
+    ```bash
+    npm run lint
+    ```
+-   **Fixa linting-problem automatiskt:**
+    ```bash
+    npm run lint:fix
+    ```
+-   **Formatera kod:**
+    ```bash
+    npm run format
+    ```
 
-To fix linting issues:
-```bash
-npm run lint:fix
-```
+## Teknisk Stack
 
-To format code:
-```bash
-npm run format
-```
+-   **Frontend:** React, TypeScript, Vite, Material UI (MUI), PapaParse (CSV-parser), SheetJS (xlsx) (Excel-hantering), JSZip, pdf.js (PDF-hantering)
+-   **Datapersistens (för regler):** Webbläsarens `localStorage`
+-   **Pakethanterare:** npm
 
-## Tech Stack
+## Deployment
 
-- **Frontend:** React, TypeScript, Vite, React Router, Material UI (MUI)
-- **Backend:** Node.js, Express.js (planned), OpenAI GPT API
-- **Package Manager:** npm
-- **Deployment:** Docker (planned)
+Applikationen är konfigurerad för att kunna deployas som en statisk webbplats. För Netlify, se till att följande inställningar används:
+-   **Base directory:** `frontend`
+-   **Build command:** `npm run build`
+-   **Publish directory:** `dist` (eller `frontend/dist`)
