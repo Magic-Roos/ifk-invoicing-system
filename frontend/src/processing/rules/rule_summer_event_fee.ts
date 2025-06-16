@@ -2,7 +2,7 @@ import { Rule, ParticipationData } from '../../types';
 
 // Configuration is hardcoded as we cannot read files in the browser.
 const SUMMER_START_DATE = '2024-06-15'; // YYYY-MM-DD
-const SUMMER_END_DATE = '2024-08-15';   // YYYY-MM-DD
+const SUMMER_END_DATE = '2024-08-15'; // YYYY-MM-DD
 
 export const rule_summer_event_fee: Rule = {
   priority: 35,

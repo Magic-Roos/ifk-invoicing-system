@@ -20,12 +20,7 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "plugins": [
-    "react",
-    "@typescript-eslint",
-    "jsx-a11y",
-    "import"
-  ],
+  "plugins": ["react", "@typescript-eslint", "jsx-a11y", "import"],
   "rules": {
     "prettier/prettier": "error",
     "react/react-in-jsx-scope": "off", // Not needed with Vite/React 17+

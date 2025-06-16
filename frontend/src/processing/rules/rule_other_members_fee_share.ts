@@ -23,7 +23,7 @@ export const rule_other_members_fee_share: Rule = {
 
     return {
       runnerPays: Math.round(runnerPays * 100) / 100, // Round to 2 decimal places
-      clubPays: Math.round(clubPays * 100) / 100,     // Round to 2 decimal places
+      clubPays: Math.round(clubPays * 100) / 100, // Round to 2 decimal places
     };
   },
 };

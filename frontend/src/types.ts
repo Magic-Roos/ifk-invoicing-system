@@ -79,10 +79,31 @@ export interface UploadedInvoiceData {
   message?: string;
 }
 
-export interface Rule {
+// Parameters for specific rule types
+export interface OtherMembersFeeShareParameters {
+  runnerPaysPercentage: number;
+  maxRunnerPays: number;
+}
+
+export interface SummerEventFeeParameters {
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+}
+
+// Represents the configuration of a rule, as stored in localStorage and edited in the UI.
+export interface RuleConfig {
+  id: string;
   name: string;
   description: string;
   priority: number;
+  parameters?: OtherMembersFeeShareParameters | SummerEventFeeParameters;
+}
+
+// Represents a rule that has been compiled into a function that can be executed.
+export interface ExecutableRule extends RuleConfig {
   condition: (participation: ParticipationData) => boolean;
-  action: (participation: ParticipationData) => { runnerPays: number; clubPays: number };
+  action: (participation: ParticipationData) => {
+    runnerPays: number;
+    clubPays: number;
+  };
 }

@@ -7,9 +7,11 @@ export const rule_youth_junior_fee: Rule = {
 
   condition: (participation: ParticipationData): boolean => {
     // This rule applies to standard start fees for youth/juniors (age <= 20).
-    return typeof participation.age === 'number' && 
-           participation.age <= 20 && 
-           participation.feeType === 'Standard Startavgift';
+    return (
+      typeof participation.age === 'number' &&
+      participation.age <= 20 &&
+      participation.feeType === 'Standard Startavgift'
+    );
   },
 
   action: (participation: ParticipationData) => {

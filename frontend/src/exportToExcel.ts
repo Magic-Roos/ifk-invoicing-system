@@ -1,8 +1,7 @@
 import * as XLSX from 'xlsx';
-
-// A generic row type
+// A generic row type for Excel export
 export type ExportRow = {
-  [key: string]: any;
+  [key: string]: string | number | null | undefined;
 };
 
 // Configuration for a single column in a sheet
@@ -25,7 +24,10 @@ export interface SheetConfig<T> {
  * @param sheets An array of SheetConfig objects, each defining a sheet.
  * @param filename The desired name for the Excel file (e.g., "report.xlsx").
  */
-export const exportToExcel = (sheets: SheetConfig<any>[], filename: string): void => {
+export const exportToExcel = (
+  sheets: SheetConfig<DataRow>[],
+  filename: string
+): void => {
   if (!sheets || sheets.length === 0) {
     console.warn('No sheets data provided for export.');
     alert('Ingen data att exportera.');
@@ -34,20 +36,24 @@ export const exportToExcel = (sheets: SheetConfig<any>[], filename: string): voi
 
   const workbook = XLSX.utils.book_new();
 
-  sheets.forEach(sheetConfig => {
+  sheets.forEach((sheetConfig) => {
     const { sheetName, data, columns } = sheetConfig;
 
     if (!data || data.length === 0) {
-      console.warn(`No data for sheet '${sheetName}'. Creating an empty sheet.`);
-      const emptyWs = XLSX.utils.aoa_to_sheet([[`Ingen data tillgänglig för ${sheetName}`]]);
+      console.warn(
+        `No data for sheet '${sheetName}'. Creating an empty sheet.`
+      );
+      const emptyWs = XLSX.utils.aoa_to_sheet([
+        [`Ingen data tillgänglig för ${sheetName}`],
+      ]);
       XLSX.utils.book_append_sheet(workbook, emptyWs, sheetName);
       return;
     }
 
     // Transform data according to column configuration
-    const finalSheetData = data.map(row => {
+    const finalSheetData = data.map((row) => {
       const newRow: ExportRow = {};
-      columns.forEach(col => {
+      columns.forEach((col) => {
         const rawValue = row[col.key];
         // The transform function should handle potential undefined/null values
         const value = col.transform ? col.transform(rawValue) : rawValue;
@@ -63,7 +69,11 @@ export const exportToExcel = (sheets: SheetConfig<any>[], filename: string): voi
     // Add row outlining/grouping based on _rowType from original sheetConfig.data
     // The `data` here refers to sheetConfig.data which contains the _rowType property.
     // `finalSheetData` is what's actually in the sheet (transformed, without _rowType).
-    if (data && data.length > 0 && data.some(r => r && typeof r === 'object' && '_rowType' in r)) {
+    if (
+      data &&
+      data.length > 0 &&
+      data.some((r) => r && typeof r === 'object' && '_rowType' in r)
+    ) {
       if (!worksheet['!rows']) {
         worksheet['!rows'] = [];
       }
@@ -73,14 +83,19 @@ export const exportToExcel = (sheets: SheetConfig<any>[], filename: string): voi
         // index corresponds to the row in finalSheetData (0-indexed data part of the sheet)
         const rowIndexInSheet = index + 1; // +1 because sheet data rows start after header (row 0 in sheet model)
 
-        if (originalRow && typeof originalRow === 'object' && '_rowType' in originalRow) {
+        if (
+          originalRow &&
+          typeof originalRow === 'object' &&
+          '_rowType' in originalRow
+        ) {
           // Ensure the row object exists in '!rows' array for this specific index
           if (!actualRowsArray[rowIndexInSheet]) {
             actualRowsArray[rowIndexInSheet] = {};
           }
-          
+
           const rowObj = actualRowsArray[rowIndexInSheet];
-          if (rowObj) { // Should always be true due to earlier check
+          if (rowObj) {
+            // Should always be true due to earlier check
             if (originalRow._rowType === 'summary') {
               rowObj.level = 1;
             } else if (originalRow._rowType === 'detail') {
@@ -92,7 +107,11 @@ export const exportToExcel = (sheets: SheetConfig<any>[], filename: string): voi
 
       // Set worksheet options to show outlines if any row has a level > 0
       const rowsArray = worksheet['!rows']; // Keep reference for type narrowing
-      const hasOutlineLevels = Array.isArray(rowsArray) && rowsArray.some(row => row && typeof row.level === 'number' && row.level > 0);
+      const hasOutlineLevels =
+        Array.isArray(rowsArray) &&
+        rowsArray.some(
+          (row) => row && typeof row.level === 'number' && row.level > 0
+        );
       if (hasOutlineLevels) {
         if (!worksheet['!outline']) {
           worksheet['!outline'] = {};
@@ -105,9 +124,9 @@ export const exportToExcel = (sheets: SheetConfig<any>[], filename: string): voi
     // Auto-size columns
     if (finalSheetData.length > 0) {
       const columnKeysForWidth = Object.keys(finalSheetData[0] || {});
-      const colWidths = columnKeysForWidth.map(header => {
+      const colWidths = columnKeysForWidth.map((header) => {
         let maxWidth = header.length;
-        finalSheetData.forEach(dataRow => {
+        finalSheetData.forEach((dataRow) => {
           const cellValue = dataRow[header];
           const cellLength = cellValue ? String(cellValue).length : 0;
           if (cellLength > maxWidth) {

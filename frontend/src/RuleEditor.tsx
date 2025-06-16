@@ -1,98 +1,93 @@
 import React, { useState, useEffect } from 'react';
 import { DEFAULT_RULES, LOCAL_STORAGE_RULES_KEY } from './rulesConfig';
-import { Box, Typography, TextField, Button, Paper, List, ListItem, ListItemText, Divider, CircularProgress, Alert } from '@mui/material';
-
-interface OtherMembersFeeShareParameters {
-  runnerPaysPercentage: number;
-  maxRunnerPays: number;
-}
-
-interface SummerEventFeeParameters {
-  startDate: string; // YYYY-MM-DD
-  endDate: string;   // YYYY-MM-DD
-}
-
-interface Rule {
-  id: string;
-  name: string;
-  description: string;
-  priority: number;
-  parameters?: OtherMembersFeeShareParameters | SummerEventFeeParameters;
-}
+import {
+  RuleConfig,
+  OtherMembersFeeShareParameters,
+  SummerEventFeeParameters,
+} from './types';
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  Alert,
+} from '@mui/material';
 
 interface RuleEditorProps {
   onClose: () => void;
-  onRuleChangeAndRecalculate?: () => void; 
+  onRuleChangeAndRecalculate?: () => void;
 }
 
-// DEFAULT_RULES and LOCAL_STORAGE_RULES_KEY are now imported from rulesConfig.ts
+const RuleEditor: React.FC<RuleEditorProps> = ({
+  onClose,
+  onRuleChangeAndRecalculate,
+}) => {
+  const [rules, setRules] = useState<RuleConfig[]>([]);
+  const [saveStatus, setSaveStatus] = useState<{
+    message: string;
+    severity: 'success' | 'error';
+  } | null>(null);
+  const [summerSaveStatus, setSummerSaveStatus] = useState<{
+    message: string;
+    severity: 'success' | 'error';
+  } | null>(null);
 
-const RuleEditor: React.FC<RuleEditorProps> = ({ onClose, onRuleChangeAndRecalculate }) => {
-  const [rules, setRules] = useState<Rule[]>([]);
-  // setLoading and setError are no longer needed for API calls, but can be kept if desired for other async ops or future use.
-  // For now, we'll simplify and remove them as primary load state is synchronous from localStorage.
-  // const [loading, setLoading] = useState<boolean>(false); // Default to false
-  // const [error, setError] = useState<string | null>(null);
-  
-  // States for the editable rule (Other Members Fee Share)
   const [editableRuleId] = useState<string>('other_members_fee_share');
   const [currentPercentage, setCurrentPercentage] = useState<string>('');
   const [currentMaxAmount, setCurrentMaxAmount] = useState<string>('');
-  const [saveStatus, setSaveStatus] = useState<{ message: string, severity: 'success' | 'error' } | null>(null);
 
-  // States for the Summer Event Fee rule
   const [editableSummerRuleId] = useState<string>('summer_event_fee');
   const [summerStartDate, setSummerStartDate] = useState<string>('');
   const [summerEndDate, setSummerEndDate] = useState<string>('');
-  const [summerSaveStatus, setSummerSaveStatus] = useState<{ message: string, severity: 'success' | 'error' } | null>(null);
 
   const loadAndSetRules = React.useCallback(() => {
-    let loadedRules: Rule[] = DEFAULT_RULES;
+    let loadedRules: RuleConfig[] = DEFAULT_RULES;
     try {
       const storedRules = localStorage.getItem(LOCAL_STORAGE_RULES_KEY);
       if (storedRules) {
-        const parsedRules: Rule[] = JSON.parse(storedRules);
-        // Basic validation: check if it's an array and has expected structure for key rules
-        if (Array.isArray(parsedRules) && parsedRules.every(r => r.id && r.name)) {
-          // Further ensure essential editable rules exist, or merge defaults
-          // This merge logic can be sophisticated, for now, we'll assume stored is mostly good or use defaults if not.
-          // A simple strategy: if essential editable rules are missing from storage, revert to full defaults.
-          const hasOtherMembersRule = parsedRules.find(r => r.id === editableRuleId);
-          const hasSummerRule = parsedRules.find(r => r.id === editableSummerRuleId);
-          if (hasOtherMembersRule && hasSummerRule) {
-            loadedRules = parsedRules;
-          } else {
-            // Stored data is incomplete for editable rules, use defaults and save them
-            console.warn('Stored rules incomplete, reverting to defaults.');
-            localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(DEFAULT_RULES));
-            loadedRules = DEFAULT_RULES; 
-          }
+        const parsedRules: RuleConfig[] = JSON.parse(storedRules);
+        if (
+          Array.isArray(parsedRules) &&
+          parsedRules.every((r) => r.id && r.name)
+        ) {
+          loadedRules = parsedRules;
         } else {
-          console.warn('Invalid rules structure in localStorage, using defaults.');
-          localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(DEFAULT_RULES));
+          localStorage.setItem(
+            LOCAL_STORAGE_RULES_KEY,
+            JSON.stringify(DEFAULT_RULES)
+          );
         }
-      } else {
-        // No rules in localStorage, use defaults and save them
-        localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(DEFAULT_RULES));
       }
     } catch (error) {
-      console.error('Error loading rules from localStorage, using defaults:', error);
-      localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(DEFAULT_RULES)); // Save defaults if error
-      loadedRules = DEFAULT_RULES; // Ensure loadedRules is set
+      console.error(
+        'Fel vid laddning av regler, återgår till standard:',
+        error
+      );
+      localStorage.setItem(
+        LOCAL_STORAGE_RULES_KEY,
+        JSON.stringify(DEFAULT_RULES)
+      );
     }
     setRules(loadedRules);
 
-    // Populate form fields from loaded rules
-    const otherMembersRule = loadedRules.find(r => r.id === editableRuleId);
-    if (otherMembersRule && otherMembersRule.parameters && 'runnerPaysPercentage' in otherMembersRule.parameters) {
-      setCurrentPercentage(((otherMembersRule.parameters as OtherMembersFeeShareParameters).runnerPaysPercentage * 100).toString());
-      setCurrentMaxAmount((otherMembersRule.parameters as OtherMembersFeeShareParameters).maxRunnerPays.toString());
+    const otherMembersRule = loadedRules.find((r) => r.id === editableRuleId);
+    if (otherMembersRule?.parameters) {
+      const params =
+        otherMembersRule.parameters as OtherMembersFeeShareParameters;
+      setCurrentPercentage((params.runnerPaysPercentage * 100).toString());
+      setCurrentMaxAmount(params.maxRunnerPays.toString());
     }
 
-    const summerRule = loadedRules.find(r => r.id === editableSummerRuleId);
-    if (summerRule && summerRule.parameters && 'startDate' in summerRule.parameters) {
-      setSummerStartDate((summerRule.parameters as SummerEventFeeParameters).startDate);
-      setSummerEndDate((summerRule.parameters as SummerEventFeeParameters).endDate);
+    const summerRule = loadedRules.find((r) => r.id === editableSummerRuleId);
+    if (summerRule?.parameters) {
+      const params = summerRule.parameters as SummerEventFeeParameters;
+      setSummerStartDate(params.startDate);
+      setSummerEndDate(params.endDate);
     }
   }, [editableRuleId, editableSummerRuleId]);
 
@@ -100,64 +95,78 @@ const RuleEditor: React.FC<RuleEditorProps> = ({ onClose, onRuleChangeAndRecalcu
     loadAndSetRules();
   }, [loadAndSetRules]);
 
-
-  const handleSave = () => { // No longer async
+  const handleSave = () => {
     setSaveStatus(null);
     const percentage = parseFloat(currentPercentage) / 100;
     const maxAmount = parseFloat(currentMaxAmount);
 
     if (isNaN(percentage) || percentage < 0 || percentage > 1) {
-      setSaveStatus({ message: 'Felaktig procent. Skriv ett tal mellan 0 och 100.', severity: 'error' });
+      setSaveStatus({
+        message: 'Felaktig procent. Ange ett tal mellan 0 och 100.',
+        severity: 'error',
+      });
       return;
     }
     if (isNaN(maxAmount) || maxAmount < 0) {
-      setSaveStatus({ message: 'Felaktigt maxbelopp. Skriv ett tal som är noll eller högre.', severity: 'error' });
+      setSaveStatus({
+        message: 'Felaktigt maxbelopp. Ange ett positivt tal.',
+        severity: 'error',
+      });
       return;
     }
 
-    const updatedRules = rules.map(rule => {
+    const updatedRules = rules.map((rule) => {
       if (rule.id === editableRuleId) {
-        const newName = `Other Members Fee Share (${(percentage * 100).toFixed(0)}%, max ${maxAmount} SEK)`;
-        const newDescription = `For standard start fees, other members pay ${(percentage * 100).toFixed(0)}% of the fee, up to a maximum of ${maxAmount} SEK. The club pays the rest.`;
+        const newName = `Avgiftsdelning övriga medlemmar (${(
+          percentage * 100
+        ).toFixed(0)}%, max ${maxAmount} kr)`;
+        const newDescription = `För normala startavgifter betalar övriga medlemmar ${(
+          percentage * 100
+        ).toFixed(
+          0
+        )}% av avgiften, upp till maximalt ${maxAmount} kr. Klubben betalar resten.`;
         return {
           ...rule,
           name: newName,
           description: newDescription,
-          parameters: { runnerPaysPercentage: percentage, maxRunnerPays: maxAmount },
+          parameters: {
+            runnerPaysPercentage: percentage,
+            maxRunnerPays: maxAmount,
+          },
         };
       }
       return rule;
     });
     setRules(updatedRules);
     localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(updatedRules));
-    setSaveStatus({ message: 'Regeln har sparats lokalt!', severity: 'success' });
+    setSaveStatus({ message: 'Ändringar sparade!', severity: 'success' });
     if (onRuleChangeAndRecalculate) {
       onRuleChangeAndRecalculate();
     }
-    // No catch block needed for direct state/localStorage update unless JSON.stringify fails (highly unlikely for this data)
   };
 
-  // Loading and error states for API calls are removed.
-  // The component now loads synchronously from localStorage or defaults.
-  // If an error occurs during localStorage parsing, a console warning is shown, and defaults are used.
-  // A more sophisticated UI for localStorage errors could be added if necessary.
-
-  const handleSaveSummerRule = () => { // No longer async
+  const handleSaveSummerRule = () => {
     setSummerSaveStatus(null);
 
     if (!summerStartDate || !summerEndDate) {
-      setSummerSaveStatus({ message: 'Du måste fylla i både startdatum och slutdatum.', severity: 'error' });
+      setSummerSaveStatus({
+        message: 'Du måste fylla i både start- och slutdatum.',
+        severity: 'error',
+      });
       return;
     }
     if (new Date(summerStartDate) > new Date(summerEndDate)) {
-      setSummerSaveStatus({ message: 'Startdatumet måste vara före eller samma dag som slutdatumet.', severity: 'error' });
+      setSummerSaveStatus({
+        message: 'Startdatumet måste vara före eller samma som slutdatumet.',
+        severity: 'error',
+      });
       return;
     }
 
-    const updatedRules = rules.map(rule => {
+    const updatedRules = rules.map((rule) => {
       if (rule.id === editableSummerRuleId) {
-        const newName = `Runner Pays Full for Summer Period Events (${summerStartDate} - ${summerEndDate})`;
-        const newDescription = `Runner pays the full start fee for events during the summer period (${summerStartDate} - ${summerEndDate}).`;
+        const newName = `Löpare betalar full avgift (${summerStartDate} till ${summerEndDate})`;
+        const newDescription = `Löparen betalar hela startavgiften för tävlingar under sommarperioden (${summerStartDate} till ${summerEndDate}). Regeln gäller inte för SM-tävlingar.`;
         return {
           ...rule,
           name: newName,
@@ -169,51 +178,54 @@ const RuleEditor: React.FC<RuleEditorProps> = ({ onClose, onRuleChangeAndRecalcu
     });
     setRules(updatedRules);
     localStorage.setItem(LOCAL_STORAGE_RULES_KEY, JSON.stringify(updatedRules));
-    setSummerSaveStatus({ message: 'Sommarperiodens datum har sparats lokalt!', severity: 'success' });
+    setSummerSaveStatus({ message: 'Ändringar sparade!', severity: 'success' });
     if (onRuleChangeAndRecalculate) {
       onRuleChangeAndRecalculate();
     }
-    // No catch block needed for direct state/localStorage update
   };
 
-  const otherMembersRuleDetails = rules.find(r => r.id === editableRuleId);
-  const summerEventRuleDetails = rules.find(r => r.id === editableSummerRuleId);
+  const otherMembersRuleDetails = rules.find((r) => r.id === editableRuleId);
+  const summerEventRuleDetails = rules.find(
+    (r) => r.id === editableSummerRuleId
+  );
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4" gutterBottom component="div">
-          Inställningar för tävlingsavgifter
-        </Typography>
-        <Button variant="outlined" onClick={onClose}>Stäng inställningar</Button>
-      </Box>
+    <Box sx={{ p: 3, maxWidth: 800, margin: 'auto' }}>
+      <Typography variant='h4' gutterBottom>
+        Redigera regler
+      </Typography>
+      <Typography variant='body1' color='textSecondary' sx={{ mb: 3 }}>
+        Här kan du ändra parametrarna för reglerna som styr beräkningen av
+        startavgifter. Ändringarna sparas lokalt i din webbläsare.
+      </Typography>
 
-      {/* Edit Other Members Fee Share Rule */}
       {otherMembersRuleDetails && (
         <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6">Inställningar för: {otherMembersRuleDetails.name}</Typography>
-          <Typography variant="body2" color="textSecondary" gutterBottom>{otherMembersRuleDetails.description}</Typography>
-          <Box component="form" sx={{ mt: 2 }}>
+          <Typography variant='h6'>{otherMembersRuleDetails.name}</Typography>
+          <Typography variant='body2' color='textSecondary' gutterBottom>
+            {otherMembersRuleDetails.description}
+          </Typography>
+          <Box component='form' sx={{ mt: 2 }}>
             <TextField
-              label="Löparens andel av startavgiften (%)"
-              type="number"
+              label='Löparens andel av avgiften (%)'
+              type='number'
               value={currentPercentage}
               onChange={(e) => setCurrentPercentage(e.target.value)}
               fullWidth
               sx={{ mb: 2 }}
-              helperText="Hur många procent av startavgiften ska löparen betala själv? (t.ex. 60 för 60%)"
+              helperText='Ange den procentandel av avgiften som löparen ska betala (t.ex. 50).'
             />
             <TextField
-              label="Maximalt belopp löparen betalar (kr)"
-              type="number"
+              label='Maximalt belopp löparen betalar (kr)'
+              type='number'
               value={currentMaxAmount}
               onChange={(e) => setCurrentMaxAmount(e.target.value)}
               fullWidth
               sx={{ mb: 2 }}
-              helperText="Vad är det högsta beloppet i kronor som löparen ska betala? (t.ex. 120)"
+              helperText='Ange det högsta beloppet i kronor som löparen ska betala (t.ex. 120).'
             />
-            <Button variant="contained" onClick={handleSave}>
-              Spara inställningar för "{otherMembersRuleDetails.name}"
+            <Button variant='contained' onClick={handleSave}>
+              Spara ändringar
             </Button>
             {saveStatus && (
               <Alert severity={saveStatus.severity} sx={{ mt: 2 }}>
@@ -224,38 +236,35 @@ const RuleEditor: React.FC<RuleEditorProps> = ({ onClose, onRuleChangeAndRecalcu
         </Paper>
       )}
 
-      {/* Edit Summer Event Fee Rule */}
       {summerEventRuleDetails && (
         <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6">Inställningar för: {summerEventRuleDetails.name}</Typography>
-          <Typography variant="body2" color="textSecondary" gutterBottom>{summerEventRuleDetails.description}</Typography>
-          <Box component="form" sx={{ mt: 2 }}>
+          <Typography variant='h6'>{summerEventRuleDetails.name}</Typography>
+          <Typography variant='body2' color='textSecondary' gutterBottom>
+            {summerEventRuleDetails.description}
+          </Typography>
+          <Box component='form' sx={{ mt: 2 }}>
             <TextField
-              label="Startdatum för perioden"
-              type="date"
+              label='Startdatum för perioden'
+              type='date'
               value={summerStartDate}
               onChange={(e) => setSummerStartDate(e.target.value)}
               fullWidth
               sx={{ mb: 2 }}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              helperText="Första dagen då denna regel gäller (format ÅÅÅÅ-MM-DD)."
+              InputLabelProps={{ shrink: true }}
+              helperText='Första dagen då regeln gäller (format ÅÅÅÅ-MM-DD).'
             />
             <TextField
-              label="Slutdatum för perioden"
-              type="date"
+              label='Slutdatum för perioden'
+              type='date'
               value={summerEndDate}
               onChange={(e) => setSummerEndDate(e.target.value)}
               fullWidth
               sx={{ mb: 2 }}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              helperText="Sista dagen då denna regel gäller (format ÅÅÅÅ-MM-DD)."
+              InputLabelProps={{ shrink: true }}
+              helperText='Sista dagen då regeln gäller (format ÅÅÅÅ-MM-DD).'
             />
-            <Button variant="contained" onClick={handleSaveSummerRule}>
-              Spara inställningar för "{summerEventRuleDetails.name}"
+            <Button variant='contained' onClick={handleSaveSummerRule}>
+              Spara ändringar
             </Button>
             {summerSaveStatus && (
               <Alert severity={summerSaveStatus.severity} sx={{ mt: 2 }}>
@@ -266,22 +275,25 @@ const RuleEditor: React.FC<RuleEditorProps> = ({ onClose, onRuleChangeAndRecalcu
         </Paper>
       )}
 
-      <Typography variant="h5" gutterBottom sx={{mt: 4}}>
-        Alla Regler
+      <Typography variant='h5' gutterBottom sx={{ mt: 4 }}>
+        Regelöversikt
       </Typography>
       <List component={Paper}>
         {rules.map((rule, index) => (
           <React.Fragment key={rule.id}>
-            <ListItem alignItems="flex-start">
+            <ListItem alignItems='flex-start'>
               <ListItemText
                 primary={`${rule.name} (Prioritet: ${rule.priority})`}
                 secondary={rule.description}
               />
             </ListItem>
-            {index < rules.length - 1 && <Divider component="li" />}
+            {index < rules.length - 1 && <Divider component='li' />}
           </React.Fragment>
         ))}
       </List>
+      <Button onClick={onClose} sx={{ mt: 3 }} variant='outlined'>
+        Stäng
+      </Button>
     </Box>
   );
 };
