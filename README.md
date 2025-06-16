@@ -2,6 +2,22 @@
 
 Detta projekt är en webbapplikation (frontend-only) designad för att hjälpa IFK Göteborg Orienterings kassör att hantera underlag för fakturering av medlemmar baserat på deras tävlingsdeltagande. Applikationen hanterar parsning av deltagarfiler, tillämpning av avgiftsregler och generering av sammanställningar för fakturering och avstämning mot fakturor. All databehandling och regelhantering sker direkt i användarens webbläsare.
 
+## Funktionalitet
+
+- **Import av deltagardata:** Stöd för både Excel- och CSV-filer exporterade från Eventor.
+- **Regelhantering:** Avgifter beräknas automatiskt enligt klubbens regler (ungdom, SM, sommarperiod, mm).
+- **Export av fakturaunderlag:**
+  - **Excel:** Hierarkisk export där varje medlem kan expanderas för att visa tävlingsrader (för granskning och arkivering).
+  - **CSV:** Två varianter för Fortnox-import:
+    - **Endast fakturerbara poster** (belopp > 0)
+    - **Komplett underlag** (alla poster, även de med 0 kr)
+  - CSV-filerna är anpassade för enkel import till Fortnox och saknar rubrikrad enligt krav.
+
+**Exempel på CSV-rad:**
+```csv
+"Anders Andersson",1,120.00,"SM lång 2024-06-18 H21"
+```
+
 ## Projektstruktur
 
 - `/frontend`: Innehåller React + TypeScript frontend-applikationen, byggd med Vite.
@@ -54,7 +70,7 @@ Projektet använder ESLint och Prettier för kodkvalitet.
 
 ## Teknisk Stack
 
--   **Frontend:** React, TypeScript, Vite, Material UI (MUI), PapaParse (CSV-parser), SheetJS (xlsx) (Excel-hantering), JSZip, pdf.js (PDF-hantering)
+-   **Frontend:** React, TypeScript, Vite, Material UI (MUI), PapaParse (CSV-parser), exceljs (Excel-export), JSZip, pdf.js (PDF-hantering)
 -   **Datapersistens (för regler):** Webbläsarens `localStorage`
 -   **Pakethanterare:** npm
 
