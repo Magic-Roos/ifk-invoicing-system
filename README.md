@@ -5,13 +5,14 @@ Detta projekt är en webbapplikation (frontend-only) designad för att hjälpa I
 ## Funktionalitet
 
 - **Import av deltagardata:** Stöd för både Excel- och CSV-filer exporterade från Eventor.
-- **Regelhantering:** Avgifter beräknas automatiskt enligt klubbens regler (ungdom, SM, sommarperiod, mm).
+- **Regelhantering:** Avgifter beräknas automatiskt enligt klubbens regler (ungdom, SM, sommarperiod, junior-subvention mm).
+  - **Ny regel:** Juniorer (17-20 år) betalar 50% av startavgiften, dock max 200 kr, resten betalas av klubben.
 - **Export av fakturaunderlag:**
-  - **Excel:** Hierarkisk export där varje medlem kan expanderas för att visa tävlingsrader (för granskning och arkivering).
+  - **Excel:** Hierarkisk export där varje medlem kan expanderas för att visa tävlingsrader (för granskning och arkivering). Alla belopp avrundas nu konsekvent till två decimaler.
   - **CSV:** Två varianter för Fortnox-import:
     - **Endast fakturerbara poster** (belopp > 0)
     - **Komplett underlag** (alla poster, även de med 0 kr)
-  - CSV-filerna är anpassade för enkel import till Fortnox och saknar rubrikrad enligt krav.
+  - CSV-filerna är anpassade för enkel import till Fortnox och saknar rubrikrad enligt krav. Alla belopp avrundas till två decimaler.
 
 **Exempel på CSV-rad:**
 ```csv
@@ -21,6 +22,9 @@ Detta projekt är en webbapplikation (frontend-only) designad för att hjälpa I
 ## Projektstruktur
 
 - `/frontend`: Innehåller React + TypeScript frontend-applikationen, byggd med Vite.
+  - `src/processing/rules/`: Innehåller regler (t.ex. junior_fee_share, other_members_fee_share)
+  - `src/exportToExcelWithOutline.ts` och `src/InvoicingBasisTab.tsx`: Exportfunktioner för Excel och CSV
+  - `src/utils/roundToTwoDecimals.ts`: Gemensam avrundningsfunktion för två decimaler
 - `/Sample data`: Innehåller exempeldatafiler för testning.
 
 ## Förutsättningar
@@ -50,6 +54,13 @@ Detta projekt är en webbapplikation (frontend-only) designad för att hjälpa I
     npm run dev
     ```
     Applikationen bör nu vara tillgänglig på `http://localhost:5173` (eller en annan port som Vite anger).
+
+5.  **Spara och pusha ändringar till GitHub:**
+    ```bash
+    git add .
+    git commit -m "Implementerat juniorregel och harmoniserad avrundning för export"
+    git push
+    ```
 
 ## Linting och Formatering (i `/frontend`-katalogen)
 

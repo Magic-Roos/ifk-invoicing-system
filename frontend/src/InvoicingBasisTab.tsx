@@ -1,4 +1,5 @@
 import React from 'react';
+import { roundToTwoDecimals } from './utils/roundToTwoDecimals';
 import {
   Box,
   Button,
@@ -33,7 +34,7 @@ const InvoicingBasisTab: React.FC<InvoicingBasisTabProps> = ({ results }) => {
     dataToProcess.forEach((item) => {
       const customerNumber = item.MemberName || '';
       const deliveredQuantity = 1;
-      const price = item.runnerInvoiceAmount;
+      const price = roundToTwoDecimals(item.runnerInvoiceAmount);
       const MAX_LEN = 50;
 
       let currentDesc = '';

@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { roundToTwoDecimals } from './utils/roundToTwoDecimals';
 // Minimal MemberSummary type for export
 interface MemberSummary {
   personId?: string | number | null;
@@ -96,9 +97,9 @@ export async function exportToExcelWithOutline(
     // Tävlingar (outlineLevel 1)
     if (summary.participations && summary.participations.length > 0) {
       summary.participations.forEach((p: BillingResult) => {
-        const lateFee = p.feeType === 'Efteranm.avgift' ? p.feeAmount : '';
-        const serviceFee = p.feeType === 'Tjänsteavgift' ? p.feeAmount : '';
-        const standardFee = p.feeType === 'Startavgift' ? p.feeAmount : '';
+        const standardFee = (p.feeType === 'Standard Startavgift' || p.feeType === 'DNS') ? roundToTwoDecimals(p.feeAmount) : '';
+        const lateFee = p.feeType === 'Late' ? roundToTwoDecimals(p.feeAmount) : '';
+        const serviceFee = (p.feeType === 'Service' || p.feeType === 'ChipRental') ? roundToTwoDecimals(p.feeAmount) : '';
         const compRow = worksheet.addRow([
           '',
           '',
@@ -110,7 +111,7 @@ export async function exportToExcelWithOutline(
           standardFee,
           lateFee,
           serviceFee,
-          p.runnerInvoiceAmount,
+          roundToTwoDecimals(p.runnerInvoiceAmount),
           p.appliedRule,
           p.description,
         ]);
@@ -126,11 +127,13 @@ export async function exportToExcelWithOutline(
   // Adjust column widths
   worksheet.columns.forEach((col, idx) => {
     let maxLength = 10;
-    col.eachCell({ includeEmpty: true }, (cell) => {
-      const val = cell.value ? cell.value.toString() : '';
-      if (val.length > maxLength) maxLength = val.length;
-    });
-    col.width = Math.min(maxLength + 2, 40);
+    if (col && typeof col.eachCell === 'function') {
+      col.eachCell({ includeEmpty: true }, (cell) => {
+        const val = cell.value ? cell.value.toString() : '';
+        if (val.length > maxLength) maxLength = val.length;
+      });
+      col.width = Math.min(maxLength + 2, 40);
+    }
   });
 
   // Write and trigger download
