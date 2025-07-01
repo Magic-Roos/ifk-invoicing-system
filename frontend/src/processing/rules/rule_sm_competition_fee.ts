@@ -1,6 +1,7 @@
-import { Rule, ParticipationData } from '../../types';
+import { ExecutableRule, ParticipationData } from '../../types';
 
-export const rule_sm_competition_fee: Rule = {
+export const rule_sm_competition_fee: ExecutableRule = {
+  id: 'sm_competition_full_coverage',
   priority: 30,
   name: 'SM Competition Full Fee Coverage',
   description:

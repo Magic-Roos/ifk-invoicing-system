@@ -31,16 +31,24 @@ export const DEFAULT_RULES: RuleConfig[] = [
   },
   {
     id: 'youth_junior_free_fee',
-    name: 'Ungdom & Junior, fri startavgift',
-    description: 'Klubben betalar full startavgift för ungdom & junior.',
+    name: 'Ungdom, fri startavgift (t.o.m. 16 år)',
+    description: 'Klubben betalar full startavgift för ungdomar till och med det år löparen fyller 16 år.',
     priority: 40,
   },
   {
-    id: 'other_members_fee_share',
-    name: 'Avgiftsdelning övriga medlemmar (60%, max 120 kr)',
+    id: 'junior_fee_share',
+    name: 'Subvention junior',
     description:
-      'För normala startavgifter betalar övriga medlemmar 60% av avgiften, upp till maximalt 120 kr. Klubben betalar resten.',
+      'För normala startavgifter betalar junior 50% av avgiften, upp till maximalt 200 kr. Klubben betalar resten.',
+    priority: 50,
+    parameters: { runnerPaysPercentage: 0.5, maxRunnerPays: 200 },
+  },
+  {
+    id: 'other_members_fee_share',
+    name: 'Avgiftsdelning övriga medlemmar (70%, max 200 kr)',
+    description:
+      'För normala startavgifter betalar övriga medlemmar 70% av avgiften, upp till maximalt 200 kr. Klubben betalar resten.',
     priority: 100,
-    parameters: { runnerPaysPercentage: 0.6, maxRunnerPays: 120 },
+    parameters: { runnerPaysPercentage: 0.7, maxRunnerPays: 200 },
   },
 ];

@@ -1,15 +1,18 @@
-import { Rule, ParticipationData } from '../../types';
+import { ExecutableRule, ParticipationData } from '../../types';
 
-export const rule_youth_junior_fee: Rule = {
+export const rule_youth_junior_fee: ExecutableRule = {
+  id: 'youth_junior_free_fee',
   priority: 40,
   name: 'Ungdom & Junior, fri startavgift',
   description: 'Klubben betalar full startavgift för ungdom & junior.',
 
   condition: (participation: ParticipationData): boolean => {
-    // This rule applies to standard start fees for youth/juniors (age <= 20).
+    // Denna regel gäller endast ungdomar t.o.m. det år de fyller 16 år.
+    const currentYear = new Date().getFullYear();
+    if (participation.BirthYear == null) return false;
+    const age = currentYear - participation.BirthYear;
     return (
-      typeof participation.age === 'number' &&
-      participation.age <= 20 &&
+      age <= 16 &&
       participation.feeType === 'Standard Startavgift'
     );
   },

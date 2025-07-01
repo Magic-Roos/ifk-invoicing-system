@@ -25,7 +25,7 @@ export interface SheetConfig<T> {
  * @param filename The desired name for the Excel file (e.g., "report.xlsx").
  */
 export const exportToExcel = (
-  sheets: SheetConfig<DataRow>[],
+  sheets: SheetConfig<ExportRow>[],
   filename: string
 ): void => {
   if (!sheets || sheets.length === 0) {

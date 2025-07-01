@@ -1,10 +1,11 @@
-import { Rule, ParticipationData } from '../../types';
+import { ExecutableRule, ParticipationData } from '../../types';
 
 // Configuration values are hardcoded as we cannot read files in the browser.
 const MAX_RUNNER_PAYS = 120;
 const RUNNER_PAYS_PERCENTAGE = 0.6;
 
-export const rule_other_members_fee_share: Rule = {
+export const rule_other_members_fee_share: ExecutableRule = {
+  id: 'other_members_fee_share',
   priority: 100,
   name: `Other Members Fee Share (${(RUNNER_PAYS_PERCENTAGE * 100).toFixed(0)}%, max ${MAX_RUNNER_PAYS} SEK)`,
   description: `For standard start fees, other members pay ${(RUNNER_PAYS_PERCENTAGE * 100).toFixed(0)}% of the fee, up to a maximum of ${MAX_RUNNER_PAYS} SEK. The club pays the rest.`,

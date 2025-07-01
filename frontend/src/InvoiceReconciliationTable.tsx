@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import DownloadIcon from '@mui/icons-material/Download';
-import { exportToExcel, SheetConfig } from './exportToExcel';
+import { exportToExcel, SheetConfig, ExportRow } from './exportToExcel';
 import {
   Box,
   Typography,
@@ -31,6 +31,7 @@ interface HeadCell {
 }
 
 interface ReconciliationRow {
+  [key: string]: string | number | null | undefined;
   id: string;
   eventorCompetitionName: string;
   eventorCompetitionDate: string;
@@ -44,6 +45,7 @@ interface ReconciliationRow {
 }
 
 interface UnmatchedInvoiceRow extends ParsedInvoiceInfo {
+  [key: string]: string | number | null | undefined;
   sourceFilename: string;
 }
 
@@ -446,7 +448,10 @@ const InvoiceReconciliationTable: React.FC<InvoiceReconciliationTableProps> = ({
         },
       ],
     };
-    exportToExcel([matchedSheet, unmatchedSheet], 'Fakturaavstamning.xlsx');
+    exportToExcel([
+      matchedSheet,
+      unmatchedSheet
+    ] as SheetConfig<any>[], 'Fakturaavstamning.xlsx');
   };
 
   const headCells: readonly HeadCell[] = [

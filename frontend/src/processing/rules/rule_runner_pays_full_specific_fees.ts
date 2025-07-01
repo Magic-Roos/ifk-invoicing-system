@@ -1,6 +1,7 @@
-import { Rule, ParticipationData } from '../../types';
+import { ExecutableRule, ParticipationData } from '../../types';
 
-export const rule_runner_pays_full_specific_fees: Rule = {
+export const rule_runner_pays_full_specific_fees: ExecutableRule = {
+  id: 'runner_pays_full_specific_fees',
   priority: 10,
   name: 'Runner Pays Full for Specific Fee Types',
   description:

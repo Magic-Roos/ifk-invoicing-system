@@ -1,10 +1,11 @@
-import { Rule, ParticipationData } from '../../types';
+import { ExecutableRule, ParticipationData } from '../../types';
 
 // Configuration is hardcoded as we cannot read files in the browser.
 const SUMMER_START_DATE = '2024-06-15'; // YYYY-MM-DD
 const SUMMER_END_DATE = '2024-08-15'; // YYYY-MM-DD
 
-export const rule_summer_event_fee: Rule = {
+export const rule_summer_event_fee: ExecutableRule = {
+  id: 'summer_event_fee',
   priority: 35,
   name: `Runner Pays Full for Summer Period Events (${SUMMER_START_DATE} - ${SUMMER_END_DATE})`,
   description: `Runner pays the full start fee for events during the summer period (${SUMMER_START_DATE} - ${SUMMER_END_DATE}).`,
