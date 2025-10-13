@@ -107,3 +107,27 @@ export interface ExecutableRule extends RuleConfig {
     clubPays: number;
   };
 }
+
+// Training Fee related types
+export interface TrainingFeeCompetition {
+  competitionName: string;
+  competitionDate: string;
+  className: string;
+  included: boolean; // Whether this competition is included in the count
+  excludeReason?: string; // Reason for default exclusion
+}
+
+export interface TrainingFeeMember {
+  memberName: string;
+  personId: string | number | null;
+  competitions: TrainingFeeCompetition[];
+  includedCount: number; // Number of included competitions
+  included: boolean; // Whether this member should be included in export
+}
+
+export interface TrainingFeeExportItem {
+  memberName: string;
+  quantity: number;
+  amount: number;
+  description: string;
+}

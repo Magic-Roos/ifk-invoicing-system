@@ -106,6 +106,8 @@ const transformData = (data: RawDataItem[]): ParticipationData[] => {
       }
     }
 
+    const eventType = getVal(item, columnMappings.eventType, '')?.toString() ?? '';
+    
     const baseParticipationData: Omit<
       ParticipationData,
       'feeAmount' | 'feeType' | 'description'
@@ -115,7 +117,7 @@ const transformData = (data: RawDataItem[]): ParticipationData[] => {
       CompetitionName: competitionName?.toString() ?? '',
       CompetitionDate: competitionDateStr?.toString() ?? '',
       Arranger: getVal(item, columnMappings.arranger, '')?.toString() ?? '',
-      EventType: getVal(item, columnMappings.eventType, '')?.toString() ?? '',
+      EventType: eventType,
       BirthYear: birthYearStr ? parseInt(String(birthYearStr), 10) : null,
       ClassName: getVal(item, columnMappings.class, '')?.toString() ?? '',
       ClassType: getVal(item, columnMappings.classType, '')?.toString() ?? '',
@@ -127,7 +129,8 @@ const transformData = (data: RawDataItem[]): ParticipationData[] => {
       age: age,
       isSMCompetition: !!(
         (competitionName?.toString() ?? '') &&
-        /(?<!\p{L})SM(?!\p{L})/iu.test(competitionName?.toString() ?? '')
+        /(?<!\p{L})SM(?!\p{L})/iu.test(competitionName?.toString() ?? '') &&
+        eventType.toLowerCase() === 'mästerskapstävling'
       ),
     };
 

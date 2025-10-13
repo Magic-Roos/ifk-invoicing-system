@@ -1,4 +1,7 @@
 import React, { useMemo, useState } from 'react';
+import Button from '@mui/material/Button';
+import DownloadIcon from '@mui/icons-material/Download';
+import { exportToExcel } from './exportToExcel';
 import {
   Typography,
   Paper,
@@ -214,8 +217,52 @@ const CompetitionResultsTable: React.FC<CompetitionResultsTableProps> = ({
     );
   }
 
+  const handleExport = () => {
+    // Skapa exportdata: en rad per deltagare i alla tävlingar
+    const rows = groupedAndSortedCompetitions.flatMap((competition) =>
+      competition.participants.map((participant) => ({
+        'Tävling': competition.competitionName,
+        'Datum': competition.competitionDate,
+        'Medlem': participant.MemberName,
+        'Klass': participant.ClassName || '',
+        'Avgiftstyp': participant.feeType || '',
+        'Avgiftsbelopp': participant.feeAmount,
+        'Att Fakturera (Löpare)': participant.runnerInvoiceAmount,
+        'Tillämpad Regel': participant.appliedRule || '',
+        'Beskrivning': participant.description || '',
+      }))
+    );
+    exportToExcel([
+      {
+        sheetName: 'Per tävling',
+        data: rows,
+        columns: [
+          { header: 'Tävling', key: 'Tävling' },
+          { header: 'Datum', key: 'Datum' },
+          { header: 'Medlem', key: 'Medlem' },
+          { header: 'Klass', key: 'Klass' },
+          { header: 'Avgiftstyp', key: 'Avgiftstyp' },
+          { header: 'Avgiftsbelopp', key: 'Avgiftsbelopp', isCurrency: true },
+          { header: 'Att Fakturera (Löpare)', key: 'Att Fakturera (Löpare)', isCurrency: true },
+          { header: 'Tillämpad Regel', key: 'Tillämpad Regel' },
+          { header: 'Beskrivning', key: 'Beskrivning' },
+        ],
+      },
+    ], 'Export_per_tävling.xlsx');
+  };
+
   return (
     <Paper sx={{ mt: 2, p: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<DownloadIcon />}
+          onClick={handleExport}
+          sx={{ textTransform: 'none' }}
+        >
+          Exportera per tävling
+        </Button>
+      </Box>
       <Typography variant='h5' gutterBottom>
         Resultat per Tävling
       </Typography>

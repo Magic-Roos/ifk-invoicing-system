@@ -23,6 +23,7 @@ import ResultsTable from './ResultsTable';
 import CompetitionResultsTable from './CompetitionResultsTable';
 import InvoiceReconciliationTable from './InvoiceReconciliationTable';
 import InvoicingBasisTab from './InvoicingBasisTab'; // Added for new invoicing basis tab
+import TrainingFeeTab from './TrainingFeeTab'; // Added for training fee tab
 import { UploadedInvoiceData, OrderableReconciliationKeys } from './types';
 import RuleEditor from './RuleEditor';
 import InfoPage from './InfoPage'; // Import InfoPage // Import RuleEditor
@@ -560,8 +561,8 @@ const App = () => {
                   <Tab label='Per Medlem' {...a11yProps(0)} />
                   <Tab label='Per Tävling' {...a11yProps(1)} />
                   <Tab label='Fakturaavstämning' {...a11yProps(2)} />
-                  <Tab label='Fakturaunderlag' {...a11yProps(3)} />{' '}
-                  {/* Added new tab */}
+                  <Tab label='Fakturaunderlag' {...a11yProps(3)} />
+                  <Tab label='Tränings- och tävlingsavgift' {...a11yProps(4)} />
                 </Tabs>
                 <TabPanel value={activeTab} index={0}>
                   {uploadResponse.billingResults && (
@@ -590,13 +591,15 @@ const App = () => {
                   )}
                 </TabPanel>
                 <TabPanel value={activeTab} index={3}>
-                  {' '}
-                  {/* Added new TabPanel */}
                   {uploadResponse.billingResults && (
                     <InvoicingBasisTab
                       results={uploadResponse.billingResults}
-                      // customerNumberMap={{}} // Placeholder, to be implemented
                     />
+                  )}
+                </TabPanel>
+                <TabPanel value={activeTab} index={4}>
+                  {uploadResponse.billingResults && (
+                    <TrainingFeeTab results={uploadResponse.billingResults} />
                   )}
                 </TabPanel>
               </Box>
