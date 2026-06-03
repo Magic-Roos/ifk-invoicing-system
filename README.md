@@ -12,7 +12,7 @@ Detta projekt är en webbapplikation (frontend-only) designad för att hjälpa I
   - SM-tävlingar: Klubben betalar hela avgiften (kräver både "SM" i namnet och arrangemangstyp "Mästerskapstävling")
   - Sommarperiod: Löpare betalar hela avgiften (konfiguerbar period)
   - Sena anmälningar, DNS, chip-hyra: Löpare betalar hela avgiften
-  - Övriga medlemmar: Betalar 70% av avgiften, dock max 200 kr (konfigurerbart)
+  - Övriga medlemmar (vuxna över 20 år): Betalar 70% av avgiften. Klubben subventionerar resten, dock max 200 kr per tävling (konfigurerbart)
 
 ### Visningar och export
 - **Per Medlem:** Översikt grupperad per medlem med totalsummor
