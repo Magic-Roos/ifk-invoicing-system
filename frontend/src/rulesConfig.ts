@@ -1,6 +1,6 @@
 import { RuleConfig } from './types'; // Use the new RuleConfig type
 
-export const LOCAL_STORAGE_RULES_KEY = 'ifkInvoicingAppRulesV1';
+export const LOCAL_STORAGE_RULES_KEY = 'ifkInvoicingAppRulesV2';
 
 const currentYear = new Date().getFullYear();
 
@@ -32,7 +32,8 @@ export const DEFAULT_RULES: RuleConfig[] = [
   {
     id: 'youth_junior_free_fee',
     name: 'Ungdom, fri startavgift (t.o.m. 16 år)',
-    description: 'Klubben betalar full startavgift för ungdomar till och med det år löparen fyller 16 år.',
+    description:
+      'Klubben betalar full startavgift för ungdomar till och med det år löparen fyller 16 år.',
     priority: 40,
   },
   {
@@ -45,10 +46,10 @@ export const DEFAULT_RULES: RuleConfig[] = [
   },
   {
     id: 'other_members_fee_share',
-    name: 'Avgiftsdelning övriga medlemmar (70%, max 200 kr)',
+    name: 'Avgiftsdelning övriga medlemmar (70%, klubb subventionerar max 200 kr)',
     description:
-      'För normala startavgifter betalar övriga medlemmar 70% av avgiften, upp till maximalt 200 kr. Klubben betalar resten.',
+      'För normala startavgifter betalar övriga medlemmar (vuxna över 20 år) 70% av avgiften. Klubben subventionerar resten, men maximalt 200 kr per tävling. Löparen betalar det som överstiger subventionen.',
     priority: 100,
-    parameters: { runnerPaysPercentage: 0.7, maxRunnerPays: 200 },
+    parameters: { runnerPaysPercentage: 0.7, maxClubPays: 200 },
   },
 ];

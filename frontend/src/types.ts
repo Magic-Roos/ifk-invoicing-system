@@ -82,7 +82,10 @@ export interface UploadedInvoiceData {
 // Parameters for specific rule types
 export interface OtherMembersFeeShareParameters {
   runnerPaysPercentage: number;
-  maxRunnerPays: number;
+  // Tak på vad löparen betalar (används av juniorregeln).
+  maxRunnerPays?: number;
+  // Tak på klubbens subvention per tävling (används av regeln för övriga medlemmar).
+  maxClubPays?: number;
 }
 
 export interface SummerEventFeeParameters {

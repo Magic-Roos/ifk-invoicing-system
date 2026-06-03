@@ -64,7 +64,10 @@ const buildExecutableRules = (rules: RuleConfig[]): ExecutableRule[] => {
           return false;
         case 'junior_fee_share':
           return (
-            age !== null && age >= 17 && age <= 20 && feeType === 'Standard Startavgift'
+            age !== null &&
+            age >= 17 &&
+            age <= 20 &&
+            feeType === 'Standard Startavgift'
           );
         case 'youth_junior_free_fee':
           return (
@@ -108,16 +111,19 @@ const buildExecutableRules = (rules: RuleConfig[]): ExecutableRule[] => {
         case 'other_members_fee_share':
           if (parameters) {
             const params = parameters as OtherMembersFeeShareParameters;
-            let calculatedRunnerPays = feeAmount * params.runnerPaysPercentage;
+            // Klubben subventionerar (1 - löparens andel) av avgiften,
+            // men maximalt maxClubPays kr per tävling. Löparen betalar resten.
+            let calculatedClubPays =
+              feeAmount * (1 - params.runnerPaysPercentage);
             if (
-              params.maxRunnerPays &&
-              calculatedRunnerPays > params.maxRunnerPays
+              params.maxClubPays != null &&
+              calculatedClubPays > params.maxClubPays
             ) {
-              calculatedRunnerPays = params.maxRunnerPays;
+              calculatedClubPays = params.maxClubPays;
             }
             return {
-              runnerPays: calculatedRunnerPays,
-              clubPays: feeAmount - calculatedRunnerPays,
+              runnerPays: feeAmount - calculatedClubPays,
+              clubPays: calculatedClubPays,
             };
           }
           // Fallback for misconfiguration
