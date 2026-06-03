@@ -80,7 +80,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
       const params =
         otherMembersRule.parameters as OtherMembersFeeShareParameters;
       setCurrentPercentage((params.runnerPaysPercentage * 100).toString());
-      setCurrentMaxAmount(params.maxRunnerPays.toString());
+      setCurrentMaxAmount((params.maxClubPays ?? 0).toString());
     }
 
     const summerRule = loadedRules.find((r) => r.id === editableSummerRuleId);
@@ -119,19 +119,19 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
       if (rule.id === editableRuleId) {
         const newName = `Avgiftsdelning övriga medlemmar (${(
           percentage * 100
-        ).toFixed(0)}%, max ${maxAmount} kr)`;
-        const newDescription = `För normala startavgifter betalar övriga medlemmar ${(
+        ).toFixed(0)}%, klubb subventionerar max ${maxAmount} kr)`;
+        const newDescription = `För normala startavgifter betalar övriga medlemmar (vuxna över 20 år) ${(
           percentage * 100
         ).toFixed(
           0
-        )}% av avgiften, upp till maximalt ${maxAmount} kr. Klubben betalar resten.`;
+        )}% av avgiften. Klubben subventionerar resten, men maximalt ${maxAmount} kr per tävling. Löparen betalar det som överstiger subventionen.`;
         return {
           ...rule,
           name: newName,
           description: newDescription,
           parameters: {
             runnerPaysPercentage: percentage,
-            maxRunnerPays: maxAmount,
+            maxClubPays: maxAmount,
           },
         };
       }
@@ -216,13 +216,13 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
               helperText='Ange den procentandel av avgiften som löparen ska betala (t.ex. 50).'
             />
             <TextField
-              label='Maximalt belopp löparen betalar (kr)'
+              label='Maximalt belopp klubben subventionerar (kr)'
               type='number'
               value={currentMaxAmount}
               onChange={(e) => setCurrentMaxAmount(e.target.value)}
               fullWidth
               sx={{ mb: 2 }}
-              helperText='Ange det högsta beloppet i kronor som löparen ska betala (t.ex. 120).'
+              helperText='Ange det högsta beloppet i kronor som klubben subventionerar per tävling (t.ex. 200). Löparen betalar resten.'
             />
             <Button variant='contained' onClick={handleSave}>
               Spara ändringar
