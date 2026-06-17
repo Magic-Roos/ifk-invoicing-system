@@ -19,6 +19,7 @@ import {
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { BillingResult } from './types';
+import { getMemberKey } from './memberKey';
 
 interface CompetitionSummary {
   competitionName: string;
@@ -171,14 +172,8 @@ const CompetitionResultsTable: React.FC<CompetitionResultsTableProps> = ({
     Object.values(competitionsMap).forEach((competition) => {
       const uniqueParticipantKeys = new Set<string | number>();
       competition.participants.forEach((p) => {
-        // Använd PersonId om det finns och inte är tomt/null, annars MemberName som fallback
-        const uniqueKey =
-          p.PersonId !== undefined &&
-          p.PersonId !== null &&
-          String(p.PersonId).trim() !== ''
-            ? p.PersonId
-            : p.MemberName;
-        uniqueParticipantKeys.add(uniqueKey);
+        // Person-id "0"/tomt = saknar Eventor-id, fall tillbaka på namn
+        uniqueParticipantKeys.add(getMemberKey(p.PersonId, p.MemberName));
       });
       competition.participantCount = uniqueParticipantKeys.size;
     });

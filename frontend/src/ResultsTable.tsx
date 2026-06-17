@@ -20,6 +20,7 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import DownloadIcon from '@mui/icons-material/Download';
 import { exportToExcelWithOutline } from './exportToExcelWithOutline';
 import { BillingResult } from './types';
+import { getMemberKey } from './memberKey';
 
 // Type definitions
 type Order = 'asc' | 'desc';
@@ -263,7 +264,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ results }) => {
     const summaryMap: Record<string, MemberSummary> = {};
 
     results.forEach((p) => {
-      const memberKey = p.PersonId ? String(p.PersonId) : p.MemberName;
+      const memberKey = getMemberKey(p.PersonId, p.MemberName);
       if (!summaryMap[memberKey]) {
         summaryMap[memberKey] = {
           personId: p.PersonId,
@@ -517,7 +518,7 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ results }) => {
           <TableBody>
             {sortedMemberSummaries.map((summary) => (
               <Row
-                key={summary.personId || summary.memberName}
+                key={getMemberKey(summary.personId, summary.memberName)}
                 memberSummary={summary}
               />
             ))}
