@@ -29,6 +29,18 @@ const columnMappings = {
   ],
 };
 
+// Tid-värden som betyder att löparen inte startade. Avgift utgår ändå (sen
+// anmälan/återbud) och behandlas som DNS – löparen betalar 100%.
+// Återbud hanteras likadant som "ej start".
+const NON_START_TIME_VALUES = ['ej start', 'dns', 'återbud'];
+
+const isNonStartTime = (timeRaw: unknown): boolean =>
+  NON_START_TIME_VALUES.includes(
+    String(timeRaw ?? '')
+      .toLowerCase()
+      .trim()
+  );
+
 // Helper to get a value from an item using mapped keys (case-insensitive)
 const getVal = (
   item: RawDataItem,
@@ -96,18 +108,14 @@ const transformData = (data: RawDataItem[]): ParticipationData[] => {
       }
     }
     if (!hasStarted && timeRaw) {
-      const timeLower = String(timeRaw).toLowerCase();
-      if (
-        timeLower !== 'ej start' &&
-        timeLower !== 'dns' &&
-        timeLower.trim() !== ''
-      ) {
+      if (String(timeRaw).trim() !== '' && !isNonStartTime(timeRaw)) {
         hasStarted = true;
       }
     }
 
-    const eventType = getVal(item, columnMappings.eventType, '')?.toString() ?? '';
-    
+    const eventType =
+      getVal(item, columnMappings.eventType, '')?.toString() ?? '';
+
     const baseParticipationData: Omit<
       ParticipationData,
       'feeAmount' | 'feeType' | 'description'
@@ -138,17 +146,16 @@ const transformData = (data: RawDataItem[]): ParticipationData[] => {
     const ordinaryFee =
       parseFloat(ordinaryFeeRaw?.toString().replace(',', '.') ?? '0') || 0;
     if (ordinaryFee > 0) {
+      const didNotStart = isNonStartTime(timeRaw);
+      const nonStartLabel =
+        timeRaw && String(timeRaw).toLowerCase().trim() === 'återbud'
+          ? 'Återbud'
+          : 'Ej start';
       standardizedData.push({
         ...baseParticipationData,
         feeAmount: ordinaryFee,
-        feeType:
-          timeRaw && String(timeRaw).toLowerCase() === 'ej start'
-            ? 'DNS'
-            : 'Standard Startavgift',
-        description:
-          timeRaw && String(timeRaw).toLowerCase() === 'ej start'
-            ? 'Ej start'
-            : 'Startavgift',
+        feeType: didNotStart ? 'DNS' : 'Standard Startavgift',
+        description: didNotStart ? nonStartLabel : 'Startavgift',
       });
     }
 
