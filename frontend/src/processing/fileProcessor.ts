@@ -2,6 +2,7 @@ import * as xlsx from 'xlsx';
 import Papa from 'papaparse';
 import * as ruleEngineService from './ruleEngineService';
 import { BillingResult, ParticipationData, RawDataItem } from '../types';
+import { applyMemberNameOverride } from './memberNameOverrides';
 
 // Mappings for common column name variations from Eventor exports
 const columnMappings = {
@@ -99,7 +100,12 @@ const transformData = (data: RawDataItem[]): ParticipationData[] => {
       }
     }
 
-    const memberName = `${firstName} ${lastName}`.trim();
+    const personId =
+      getVal(item, columnMappings.personId, null)?.toString() ?? '';
+    const memberName = applyMemberNameOverride(
+      personId,
+      `${firstName} ${lastName}`.trim()
+    );
     let hasStarted = false;
     if (startedRaw !== null) {
       const startedLower = String(startedRaw).toLowerCase();
@@ -120,7 +126,7 @@ const transformData = (data: RawDataItem[]): ParticipationData[] => {
       ParticipationData,
       'feeAmount' | 'feeType' | 'description'
     > = {
-      PersonId: getVal(item, columnMappings.personId, null)?.toString() ?? '',
+      PersonId: personId,
       MemberName: memberName,
       CompetitionName: competitionName?.toString() ?? '',
       CompetitionDate: competitionDateStr?.toString() ?? '',
