@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { DEFAULT_RULES, LOCAL_STORAGE_RULES_KEY } from './rulesConfig';
+import {
+  DEFAULT_RULES,
+  LOCAL_STORAGE_RULES_KEY,
+  withCurrentDefaultTexts,
+} from './rulesConfig';
 import {
   RuleConfig,
   OtherMembersFeeShareParameters,
@@ -55,7 +59,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
           Array.isArray(parsedRules) &&
           parsedRules.every((r) => r.id && r.name)
         ) {
-          loadedRules = parsedRules;
+          loadedRules = withCurrentDefaultTexts(parsedRules);
         } else {
           localStorage.setItem(
             LOCAL_STORAGE_RULES_KEY,

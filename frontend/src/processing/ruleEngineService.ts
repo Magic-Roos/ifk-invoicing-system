@@ -6,7 +6,11 @@ import {
   OtherMembersFeeShareParameters,
   SummerEventFeeParameters,
 } from '../types';
-import { DEFAULT_RULES, LOCAL_STORAGE_RULES_KEY } from '../rulesConfig';
+import {
+  DEFAULT_RULES,
+  LOCAL_STORAGE_RULES_KEY,
+  withCurrentDefaultTexts,
+} from '../rulesConfig';
 
 const getActiveRules = (): RuleConfig[] => {
   try {
@@ -20,7 +24,9 @@ const getActiveRules = (): RuleConfig[] => {
           'priority' in parsedRules[0]
         ) {
           console.log('[FE RuleEngine] Loaded rules from localStorage');
-          return [...parsedRules].sort((a, b) => a.priority - b.priority);
+          return withCurrentDefaultTexts(parsedRules).sort(
+            (a, b) => a.priority - b.priority
+          );
         }
       }
     }
@@ -34,19 +40,33 @@ const getActiveRules = (): RuleConfig[] => {
   return [...DEFAULT_RULES].sort((a, b) => a.priority - b.priority);
 };
 
+// Senior- och juniorklasser (H/D17–21), t.ex. "H21", "D21 Elit", "D20", "H18 Elit", "H17-20".
+// Veteran-, ungdoms- och publikklasser (H45, D16, Gul 2,5) räknas inte.
+export const isSeniorOrJuniorClass = (className: string): boolean => {
+  const match = /^[HD]\s*(\d{2})(?!\d)/i.exec(className.trim());
+  if (!match) return false;
+  const classAge = parseInt(match[1], 10);
+  return classAge >= 17 && classAge <= 21;
+};
+
 const buildExecutableRules = (rules: RuleConfig[]): ExecutableRule[] => {
   return rules.map((rule) => {
     const { id, name, description, priority, parameters } = rule;
 
     const condition = (participation: ParticipationData): boolean => {
-      const { feeType, isSMCompetition, age, CompetitionDate } = participation;
+      const { feeType, isSMCompetition, age, CompetitionDate, ClassName } =
+        participation;
       switch (id) {
         case 'runner_pays_full_specific_fees':
           return ['Late', 'DNS', 'ChipRental', 'Service'].includes(
             feeType || ''
           );
         case 'sm_competition_full_coverage':
-          return isSMCompetition === true && feeType === 'Standard Startavgift';
+          return (
+            isSMCompetition === true &&
+            feeType === 'Standard Startavgift' &&
+            isSeniorOrJuniorClass(ClassName ?? '')
+          );
         case 'summer_event_fee':
           if (
             parameters &&
