@@ -1,4 +1,9 @@
-import { BillingResult, TrainingFeeMember, TrainingFeeCompetition } from '../types';
+import {
+  BillingResult,
+  RuleConfig,
+  TrainingFeeMember,
+  TrainingFeeCompetition,
+} from '../types';
 import { LOCAL_STORAGE_RULES_KEY, DEFAULT_RULES } from '../rulesConfig';
 import { SummerEventFeeParameters } from '../types';
 
@@ -34,24 +39,26 @@ const shouldExcludeCompetition = (
     let summerRule;
     const storedRules = localStorage.getItem(LOCAL_STORAGE_RULES_KEY);
     if (storedRules) {
-      const parsedRules = JSON.parse(storedRules);
-      summerRule = parsedRules.find((r: any) => r.id === 'summer_event_fee');
+      const parsedRules: RuleConfig[] = JSON.parse(storedRules);
+      summerRule = parsedRules.find((r) => r.id === 'summer_event_fee');
     }
     // Fallback to default rules if not found in localStorage
     if (!summerRule) {
       summerRule = DEFAULT_RULES.find((r) => r.id === 'summer_event_fee');
     }
-    
+
     if (summerRule?.parameters) {
       const params = summerRule.parameters as SummerEventFeeParameters;
-      
+
       // Check if it's a date range (multi-day event)
       if (competitionDate.includes(' - ')) {
-        const [startDate] = competitionDate.split(' - ').map(d => d.trim());
-        
+        const [startDate] = competitionDate.split(' - ').map((d) => d.trim());
+
         // Check if it's within summer period
         if (startDate >= params.startDate && startDate <= params.endDate) {
-          console.log(`[TrainingFee] Excluding multi-day summer competition: ${competitionName}, date: ${startDate}, summer period: ${params.startDate} - ${params.endDate}`);
+          console.log(
+            `[TrainingFee] Excluding multi-day summer competition: ${competitionName}, date: ${startDate}, summer period: ${params.startDate} - ${params.endDate}`
+          );
           return { exclude: true, reason: 'Flerdagars sommartävling' };
         }
       }

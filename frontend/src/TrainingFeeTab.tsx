@@ -222,7 +222,9 @@ const TrainingFeeTab: React.FC<TrainingFeeTabProps> = ({ results }) => {
                     <TableCell align='center'>
                       <Chip
                         label={member.includedCount}
-                        color={member.includedCount >= 3 ? 'success' : 'default'}
+                        color={
+                          member.includedCount >= 3 ? 'success' : 'default'
+                        }
                         size='small'
                       />
                     </TableCell>

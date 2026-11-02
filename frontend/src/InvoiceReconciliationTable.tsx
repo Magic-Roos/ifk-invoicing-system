@@ -448,10 +448,10 @@ const InvoiceReconciliationTable: React.FC<InvoiceReconciliationTableProps> = ({
         },
       ],
     };
-    exportToExcel([
-      matchedSheet,
-      unmatchedSheet
-    ] as SheetConfig<any>[], 'Fakturaavstamning.xlsx');
+    exportToExcel(
+      [matchedSheet, unmatchedSheet] as unknown as SheetConfig<ExportRow>[],
+      'Fakturaavstamning.xlsx'
+    );
   };
 
   const headCells: readonly HeadCell[] = [
