@@ -11,10 +11,7 @@ export const rule_youth_junior_fee: ExecutableRule = {
     const currentYear = new Date().getFullYear();
     if (participation.BirthYear == null) return false;
     const age = currentYear - participation.BirthYear;
-    return (
-      age <= 16 &&
-      participation.feeType === 'Standard Startavgift'
-    );
+    return age <= 16 && participation.feeType === 'Standard Startavgift';
   },
 
   action: (participation: ParticipationData) => {

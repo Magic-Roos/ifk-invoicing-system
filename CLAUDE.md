@@ -34,6 +34,13 @@ npm run lint:fix   # Fixa lint-problem
 npm run format     # Formatera kod med Prettier
 ```
 
+## Långa kommandon (lint, build, test)
+
+- **Kör alltid med hård tidsgräns** som dödar processen, t.ex. 120 s. macOS saknar `timeout`, så använd `gtimeout` om det finns, annars `perl -e 'alarm shift; exec @ARGV' 120 <kommando>`. Kör då binären direkt (t.ex. `./node_modules/.bin/eslint src --ext .ts,.tsx`) så att ingen barnprocess blir kvar.
+- Bash-verktygets egen timeout räcker inte – den flyttar kommandot till bakgrunden i stället för att avbryta det.
+- **Lämna aldrig processer igång** när en uppgift är klar. Kontrollera med `ps -Ao pid,etime,command | grep -Ei "eslint|vite|esbuild|tsc"` och avsluta det du själv startat.
+- Linta bara källkoden (`npm run lint` = `eslint src`), aldrig `eslint .` – `dist/` innehåller minifierade bundles som får ESLint att hänga.
+
 ## Git-arbetsflöde
 
 - **Skapa alltid en ny branch** i början av varje session – namnge den beskrivande (t.ex. `feature/beskrivning` eller `fix/beskrivning`)

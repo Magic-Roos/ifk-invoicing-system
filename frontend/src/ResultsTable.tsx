@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { ExportRow } from './exportToExcel';
+import React, { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -322,103 +321,6 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ results }) => {
       return order === 'asc' ? comparison : -comparison;
     });
   }, [memberSummaries, order, orderBy]);
-
-  const consolidateParticipationsForExport = (
-    participations: BillingResult[]
-  ): ExportRow[] => {
-    if (!participations || participations.length === 0) {
-      return [];
-    }
-
-    const groupedByCompetition: Record<
-      string,
-      {
-        competitionName: string;
-        competitionDate: string;
-        standardFee: number;
-        lateFee: number;
-        serviceFee: number;
-        totalRunnerInvoiceAmount: number;
-        rulesSet: Set<string>;
-        descsSet: Set<string>;
-        displayDescsSet: Set<string>;
-      }
-    > = {};
-
-    participations.forEach((p) => {
-      const key = `${p.CompetitionName}_${p.CompetitionDate}`;
-      if (!groupedByCompetition[key]) {
-        groupedByCompetition[key] = {
-          competitionName: p.CompetitionName,
-          competitionDate: p.CompetitionDate,
-          standardFee: 0,
-          lateFee: 0,
-          serviceFee: 0,
-          totalRunnerInvoiceAmount: 0,
-          rulesSet: new Set(),
-          descsSet: new Set(),
-          displayDescsSet: new Set(),
-        };
-      }
-
-      const group = groupedByCompetition[key];
-      group.totalRunnerInvoiceAmount += p.runnerInvoiceAmount;
-
-      if (p.feeType === 'Standard Startavgift' || p.feeType === 'DNS') {
-        group.standardFee += p.feeAmount;
-      } else if (p.feeType === 'Late') {
-        group.lateFee += p.feeAmount;
-      } else if (p.feeType === 'ChipRental' || p.feeType === 'Service') {
-        group.serviceFee += p.feeAmount;
-      }
-
-      if (p.appliedRule) group.rulesSet.add(p.appliedRule);
-
-      if (p.description) {
-        group.descsSet.add(p.description);
-        if (
-          (p.runnerInvoiceAmount > 0 && p.description) ||
-          p.description.toLowerCase().includes('ej start') ||
-          p.description.toLowerCase().includes('dns')
-        ) {
-          group.displayDescsSet.add(p.description);
-        }
-      }
-    });
-
-    const sortedGroups = Object.values(groupedByCompetition).sort((a, b) => {
-      const dateA = a.competitionDate.split(' - ')[0];
-      const dateB = b.competitionDate.split(' - ')[0];
-      return new Date(dateA).getTime() - new Date(dateB).getTime();
-    });
-
-    return sortedGroups.map((group) => {
-      let finalDescriptions = Array.from(group.displayDescsSet).join(', ');
-      if (finalDescriptions === '' && group.descsSet.size > 0) {
-        finalDescriptions = Array.from(group.descsSet).join(', ');
-      }
-      if (
-        (group.displayDescsSet.size === 1 &&
-          group.displayDescsSet.has('Ej start')) ||
-        (finalDescriptions === '' &&
-          group.descsSet.size === 1 &&
-          group.descsSet.has('Ej start'))
-      ) {
-        finalDescriptions = 'Ej start';
-      }
-
-      return {
-        Tävling: group.competitionName,
-        Datum: group.competitionDate,
-        Startavgift: group.standardFee > 0 ? group.standardFee : '',
-        'Efteranm.avgift': group.lateFee > 0 ? group.lateFee : '',
-        Tjänsteavgift: group.serviceFee > 0 ? group.serviceFee : '',
-        'Att fakturera (Löpare)': group.totalRunnerInvoiceAmount,
-        'Tillämpad Regel': Array.from(group.rulesSet).join(', ') || '-',
-        Beskrivning: finalDescriptions || '-',
-      };
-    });
-  };
 
   const handleExport = async () => {
     await exportToExcelWithOutline(

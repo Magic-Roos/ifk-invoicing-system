@@ -36,8 +36,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write ./**/*.{ts,tsx,css,md,json}"
   }
 }

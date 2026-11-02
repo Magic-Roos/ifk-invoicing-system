@@ -97,9 +97,16 @@ export async function exportToExcelWithOutline(
     // Tävlingar (outlineLevel 1)
     if (summary.participations && summary.participations.length > 0) {
       summary.participations.forEach((p: BillingResult) => {
-        const standardFee = (p.feeType === 'Standard Startavgift' || p.feeType === 'DNS') ? roundToTwoDecimals(p.feeAmount) : '';
-        const lateFee = p.feeType === 'Late' ? roundToTwoDecimals(p.feeAmount) : '';
-        const serviceFee = (p.feeType === 'Service' || p.feeType === 'ChipRental') ? roundToTwoDecimals(p.feeAmount) : '';
+        const standardFee =
+          p.feeType === 'Standard Startavgift' || p.feeType === 'DNS'
+            ? roundToTwoDecimals(p.feeAmount)
+            : '';
+        const lateFee =
+          p.feeType === 'Late' ? roundToTwoDecimals(p.feeAmount) : '';
+        const serviceFee =
+          p.feeType === 'Service' || p.feeType === 'ChipRental'
+            ? roundToTwoDecimals(p.feeAmount)
+            : '';
         const compRow = worksheet.addRow([
           '',
           '',
@@ -125,7 +132,7 @@ export async function exportToExcelWithOutline(
   worksheet.views = [{ state: 'frozen', ySplit: 1 }];
 
   // Adjust column widths
-  worksheet.columns.forEach((col, idx) => {
+  worksheet.columns.forEach((col) => {
     let maxLength = 10;
     if (col && typeof col.eachCell === 'function') {
       col.eachCell({ includeEmpty: true }, (cell) => {
